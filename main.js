@@ -67,6 +67,15 @@ const start = (config, playerInfoArray, gmInfo) => {
           if(key !=playerData.id) notification += wolfsInfo[key] + "\n"
         }
       }
+
+      let whiteList = [];
+      if(playerData.role == '占い師'){
+        for (let key in playerInfoArray) {
+          if(playerInfoArray[key].role != '人狼') whiteList.push(key)
+        }
+        notification += shuffle( whiteList )[0] + "さんは白でした。（黒は出ないようになってるよ）";
+      }
+
       client.channels.cache.get(playerData.channel_id).send(notification);
     }
     
@@ -87,7 +96,7 @@ const start = (config, playerInfoArray, gmInfo) => {
 const morning = (config, playerInfoArray, gmInfo) => {
     let display = "【朝が来ました】\n";
 
-    display = gmInfo.death ? gmInfo.death + "さんが噛まれて死にました。\n" : "昨晩は誰も噛まれませんでした。\n"
+    display += gmInfo.death ? gmInfo.death + "さんが噛まれて死にました。\n" : "昨晩は誰も噛まれませんでした。\n"
     
     for (let key in playerInfoArray) {
       const playerInfo = playerInfoArray[key]
@@ -121,9 +130,6 @@ const night = (config, playerInfoArray, gmInfo) => {
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
-}
-
-const randomFortune = (config, playerInfoArray, gmInfo) => {
 }
 
 const sleep = (waitMsec) => {
@@ -246,7 +252,8 @@ client.on('message', message => {
         time:"moring",
         bite:false,
         fortune:false,
-        death:""
+        death:"",
+        vote_list:[],
       }
 
       fs.writeFile(config.gm_file, JSON.stringify(initGMFile), function (err) {
@@ -341,6 +348,37 @@ client.on('message', message => {
       if (err) return console.log(err);
     });
   }
+
+  // if(message.content.startsWith('吊る')) {
+  //   if(!permitCommand(config,gmInfo,message)) return;
+  //   if(gmInfo.time != "morning") {
+  //     message.reply( '朝しか吊れないよ' );
+  //     return;
+  //   }
+
+  //   const hang = message.content.split(' ')[1];
+  //   if(!hang) {
+	// 	  message.reply( '釣る人を入れてね！' );
+  //     return 
+  //   }
+    
+  //   const playerInfo = playerInfoArray[hang]
+  //   if(!playerInfo || !playerInfo.alive) {
+	// 	  message.reply( 'この世に存在する相手を選んでね！' );
+  //     return 
+  //   }
+
+  //   if(!gmInfo.hang) {
+	// 	  message.reply( '1回しか噛めないよ！' );
+  //     return;
+  //   }
+
+  //   playerInfo.alive = false;
+  //   fs.writeFile(config.db_file, JSON.stringify(playerInfoArray), function (err) {
+  //     if (err) return console.log(err);
+  //     else console.log('hangged!');
+  //   });
+  // }
   
   if(message.content.startsWith('占う')) {
     if(!permitCommand(config,gmInfo,message)) return;
@@ -375,6 +413,59 @@ client.on('message', message => {
     const side = playerInfo.role == '人狼' ? '黒' : '白'
     
     message.reply( fortune + "さんは" + side + "です。" );
+
+    gmInfo.fortune=false;
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
+    return;
+  }
+
+  if(message.content.startsWith('投票タイム')) {
+    if(!permitCommand(config,gmInfo,message)) return;
+    if(gmInfo.time != "morning") {
+      message.reply( '朝しか投票できないよ' );
+      return;
+    }
+
+
+    let votePlayer = [];
+    for (let key in playerInfoArray) {
+      votePlayer.push(key)
+    }
+    votePlayer = shuffle( votePlayer )
+
+    client.channels.cache.get(config.main_ch).send("まずは" + votePlayer[0] + "さんから投票してください");
+
+    gmInfo.vote_list=votePlayer;
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
+    return;
+  }
+
+  if(message.content.startsWith('投票する')) {
+    if(!permitCommand(config,gmInfo,message)) return;
+    if(gmInfo.time != "morning") {
+      message.reply( '朝しか投票できないよ' );
+      return;
+    }
+
+    votePlayer.shift()
+
+    const vote = message.content.split(' ')[1];
+    if(!vote) {
+		  message.reply( '投票する人を選んでね！' );
+      return; 
+    }
+    
+    const playerInfo = playerInfoArray[vote]
+    if(!playerInfo || !playerInfo.alive) {
+		  message.reply( 'この世に存在する相手を選んでね！' );
+      return;
+    }
+    
+    message.reply( vote + "さんに投票したよ" );
 
     gmInfo.fortune=false;
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {

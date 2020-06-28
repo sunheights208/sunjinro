@@ -22,11 +22,12 @@ const permitCommand = (config) => {
 const start = (config, playerInfoArray) => {
     let roleRaw = config.role_raw;
     let roleArray = shuffle(roleRaw);
-    let wolfs = [
+    let wolfsCannel = [
       {
         id: client.guilds.cache.get('221219415650205697').id,
         deny: ['VIEW_CHANNEL']
       }];
+    let wolfsInfo = {}
 
     
     // channelIDの取得
@@ -35,23 +36,37 @@ const start = (config, playerInfoArray) => {
       if(playerInfo) {
         
         const role = roleArray[0];
-        client.channels.cache.get(channel.id).send("あなたは" + role + config.emoji[role] + "です。");
-        
         playerInfo.role = role
         playerInfo.channel_id = channel.id
         playerInfo.alive = true
         roleArray.shift();
       
-        if(role == '人狼') wolfs.push({
-          id:playerInfo.id,
-          allow:['VIEW_CHANNEL']
-        })
+        if(role == '人狼') {
+          wolfsCannel.push({
+            id:playerInfo.id,
+            allow:['VIEW_CHANNEL']
+          });
+
+          wolfsInfo[playerInfo.id] = channel.name;
+        }
       }
     });
-    
+
+    // 全員に通知
+    for (let key in playerInfoArray) {
+      const playerData = playerInfoArray[key];
+      let notification = "あなたは" + playerData.role + config.emoji[playerData.role] + "です。";
+      if(playerData.role == '人狼'){
+        notification += "仲間は\n===========\n"
+        for (let key in wolfsInfo) {
+          if(key !=playerData.id) notification += wolfsInfo[key] + "\n"
+        }
+      }
+      client.channels.cache.get(playerData.channel_id).send(notification);
+    }
     
     // 狼専用チャンネル権限の初期化
-    client.channels.cache.get('726173962446438502').overwritePermissions(wolfs);
+    client.channels.cache.get('726173962446438502').overwritePermissions(wolfsCannel);
 
     fs.writeFile(config.db_file, JSON.stringify(playerInfoArray), function (err) {
       if (err) return console.log(err);

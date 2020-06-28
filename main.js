@@ -1,6 +1,7 @@
 // Response for Uptime Robot
 const http = require('http');
 var fs = require("fs");
+// require('dotenv').config();
 
 const shuffle = ([...array]) => {
   for (let i = array.length - 1; i >= 0; i--) {
@@ -20,10 +21,6 @@ const permitCommand = (config) => {
 
 const start = (config, playerInfoArray) => {
     let roleRaw = config.role_raw;
-    let joinPlayer = config.join_player;
-  
-    let players = [];
-    let channelIdArray = [];
     let roleArray = shuffle(roleRaw);
     let wolfs = [];
   
@@ -144,6 +141,8 @@ client.on('message', message => {
       
       // エラーチェック
       if(inputUserInfoArrayForChannel.length != inputRoleInfoArray.length){
+        console.log("有効人数"+inputUserInfoArrayForChannel.length)
+        console.log("有効役職数"+inputRoleInfoArray.length)
         client.channels.cache.get(config.main_ch).send(
           "有効なプレイヤー数と有効な役職数が一致していないよ！"
         );

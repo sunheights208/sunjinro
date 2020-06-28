@@ -2,6 +2,13 @@
 const http = require('http');
 var fs = require("fs");
 
+http.createServer(function(request, response)
+{
+	response.writeHead(200, {'Content-Type': 'text/plain'});
+	response.end('Discord bot is active now \n');
+}).listen(5000);
+
+
 const shuffle = ([...array]) => {
   for (let i = array.length - 1; i >= 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

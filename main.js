@@ -1,7 +1,7 @@
 // Response for Uptime Robot
 const http = require('http');
 var fs = require("fs");
-// require('dotenv').config();
+require('dotenv').config();
 
 const shuffle = ([...array]) => {
   for (let i = array.length - 1; i >= 0; i--) {
@@ -22,7 +22,11 @@ const permitCommand = (config) => {
 const start = (config, playerInfoArray) => {
     let roleRaw = config.role_raw;
     let roleArray = shuffle(roleRaw);
-    let wolfs = [];
+    let wolfs = [
+      {
+        id: client.guilds.cache.get('221219415650205697').id,
+        deny: ['VIEW_CHANNEL']
+      }];
 
     
     // channelIDの取得
@@ -170,6 +174,10 @@ client.on('message', message => {
           type: 'text',
           permissionOverwrites: [
             {
+              id: client.guilds.cache.get('221219415650205697').id,
+              deny: ['VIEW_CHANNEL']
+            },
+            {
               id: user.id,
               allow: ['VIEW_CHANNEL']
             }
@@ -203,26 +211,7 @@ client.on('message', message => {
       
       
   if(message.content.startsWith('確認')) {
-    const initCommandArray = message.content.split(' ');
-    if(initCommandArray[1] && initCommandArray[2]){
-      const inputMemberArray = initCommandArray[1].split(',');
-      const inputRoleArray = initCommandArray[2].split(',');
-      let message = "参加メンバー\n";
-      
-      client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
-        if(inputMemberArray.indexOf(user.displayName) !== -1 ){
-          message += user.displayName + ":" + user.user.id + "\n"
-        }
-      })
-      
-      message += "==================\n"
-      
-      inputRoleArray.forEach(role => {
-        message += role + "\n"
-      })
-      
-      client.channels.cache.get(config.main_ch).send(message);
-    }
+    console.log(client.guilds.cache.get('221219415650205697').id)
   }
   
   if(message.content.startsWith('開始')) {

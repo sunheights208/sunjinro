@@ -51,7 +51,6 @@ const start = (config, playerInfoArray) => {
     
     
     // 狼専用チャンネル権限の初期化
-    client.channels.cache.get('726173962446438502').overwritePermissions([]);
     client.channels.cache.get('726173962446438502').overwritePermissions(wolfs);
 
     fs.writeFile(config.db_file, JSON.stringify(playerInfoArray), function (err) {

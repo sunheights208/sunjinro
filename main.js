@@ -122,10 +122,9 @@ client.on('message', message => {
       let inputUserInfoArrayForChannel = [];
       let inputUserInfoArray = [];
       let inputRoleInfoArray = [];
-
-      console.log(client.guilds.cache.get('221219415650205697').members)
       
       client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
+        console.log(user.user)
         if(inputMemberArray.indexOf(user.user.username) !== -1 ){
           inputUserInfoArrayForChannel.push({
             username:user.user.username,
@@ -144,7 +143,7 @@ client.on('message', message => {
       // エラーチェック
       if(inputUserInfoArrayForChannel.length != inputRoleInfoArray.length){
         client.channels.cache.get(config.main_ch).send(
-          "有効なプレイヤー数と有効な役職数が一致していないよ！" + "有効人数："+inputUserInfoArrayForChannel.length + "有効役職数："+inputRoleInfoArray.length
+          "有効なプレイヤー数と有効な役職数が一致していないよ！" + "有効人数："+inputUserInfoArrayForChannel.length + " 有効役職数："+inputRoleInfoArray.length
         );
         return;
       }

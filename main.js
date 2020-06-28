@@ -23,7 +23,7 @@ const start = (config, playerInfoArray) => {
     let roleRaw = config.role_raw;
     let roleArray = shuffle(roleRaw);
     let wolfs = [];
-  
+
     
     // channelIDの取得
     client.channels.cache.forEach(channel => {
@@ -124,13 +124,12 @@ client.on('message', message => {
       let inputRoleInfoArray = [];
       
       client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
-        console.log(user.user)
-        if(inputMemberArray.indexOf(user.user.username) !== -1 ){
+        if(inputMemberArray.indexOf(user.displayName) !== -1 ){
           inputUserInfoArrayForChannel.push({
-            username:user.user.username,
+            username:user.displayName,
             id:user.user.id
           });
-          inputUserInfoArray.push(user.user.username);
+          inputUserInfoArray.push(user.displayName);
         }
       });
       
@@ -198,8 +197,6 @@ client.on('message', message => {
       // console.log(config);
       // console.log(gmInfo);
       // console.log(playerInfoArray);
-      start(config, playerInfoArray);
-      morning(config, playerInfoArray);
       return;
     }
   }
@@ -213,8 +210,8 @@ client.on('message', message => {
       let message = "参加メンバー\n";
       
       client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
-        if(inputMemberArray.indexOf(user.user.username) !== -1 ){
-          message += user.user.username + ":" + user.user.id + "\n"
+        if(inputMemberArray.indexOf(user.displayName) !== -1 ){
+          message += user.displayName + ":" + user.user.id + "\n"
         }
       })
       
@@ -249,8 +246,6 @@ client.on('message', message => {
 		  message.reply( '噛む人を入れてね！' );
       return 
     }
-    
-    console.log(playerInfoArray)
     
     const playerInfo = playerInfoArray[killed]
     if(!playerInfo || !playerInfo) {

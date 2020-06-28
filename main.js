@@ -11,15 +11,20 @@ const shuffle = ([...array]) => {
   return array;
 }
 
-const permitCommand = (config) => {
+const permitCommand = (config,gmInfo,message) => {
   if(config.join_player.length == 0){
     client.channels.cache.get(config.main_ch).send("初期化してね！");
+    return false
+  }
+
+  if(!gmInfo.start){
+    message.reply( '開始してね！' );
     return false
   }
   return true
 }
 
-const start = (config, playerInfoArray) => {
+const start = (config, playerInfoArray, gmInfo) => {
     let roleRaw = config.role_raw;
     let roleArray = shuffle(roleRaw);
     let wolfsCannel = [
@@ -56,7 +61,7 @@ const start = (config, playerInfoArray) => {
     for (let key in playerInfoArray) {
       const playerData = playerInfoArray[key];
       let notification = "あなたは" + playerData.role + config.emoji[playerData.role] + "です。";
-      if(playerData.role == '人狼'){
+      if(playerData.role == '人狼' && Object.keys(wolfsInfo).length > 1){
         notification += "仲間は\n===========\n"
         for (let key in wolfsInfo) {
           if(key !=playerData.id) notification += wolfsInfo[key] + "\n"
@@ -72,10 +77,17 @@ const start = (config, playerInfoArray) => {
       if (err) return console.log(err);
       else console.log('file was re-saved');
     });
+
+    gmInfo.start = true;
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
 }
 
-const morning = (config, playerInfoArray) => {
+const morning = (config, playerInfoArray, gmInfo) => {
     let display = "【朝が来ました】\n";
+
+    display = gmInfo.death ? gmInfo.death + "さんが噛まれて死にました。\n" : "昨晩は誰も噛まれませんでした。\n"
     
     for (let key in playerInfoArray) {
       const playerInfo = playerInfoArray[key]
@@ -90,6 +102,28 @@ const morning = (config, playerInfoArray) => {
     let joinPlayer = config.join_player;
     client.channels.cache.get(config.main_ch).send("【この順番で話してね！】");
     client.channels.cache.get(config.main_ch).send(shuffle(joinPlayer));
+
+    gmInfo.time = "morning";
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
+}
+
+const night = (config, playerInfoArray, gmInfo) => {
+    let display = "【夜になりました。解散してください。】";
+    
+    client.channels.cache.get(config.main_ch).send(display);
+
+    gmInfo.time = "night";
+    gmInfo.bite = true;
+    gmInfo.fortune = true;
+    gmInfo.death = "";
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
+}
+
+const randomFortune = (config, playerInfoArray, gmInfo) => {
 }
 
 const sleep = (waitMsec) => {
@@ -208,7 +242,11 @@ client.on('message', message => {
       }); 
     
       const initGMFile = {
-        start:false
+        start:false,
+        time:"moring",
+        bite:false,
+        fortune:false,
+        death:""
       }
 
       fs.writeFile(config.gm_file, JSON.stringify(initGMFile), function (err) {
@@ -229,41 +267,121 @@ client.on('message', message => {
   }
   
   if(message.content.startsWith('開始')) {
-    if(!permitCommand(config)) return;
-    start(config, playerInfoArray);
-    morning(config, playerInfoArray);
+    start(config, playerInfoArray, gmInfo);
+    morning(config, playerInfoArray, gmInfo);
     return;
   }
   
   if(message.content.startsWith('朝')) {
-    if(!permitCommand(config)) return;
-    morning(config, playerInfoArray);
+    if(!permitCommand(config,gmInfo,message)) return;
+    if(gmInfo.time != "night") {
+      message.reply( '夜が来て朝が来るのだ' );
+      return;
+    }
+    
+    morning(config, playerInfoArray, gmInfo);
+    return;
+  }
+
+  if(message.content.startsWith('夜')) {
+    if(!permitCommand(config,gmInfo,message)) return;
+    if(gmInfo.time != "morning") {
+      message.reply( '朝が来ないと、夜は来ない' );
+      return;
+    }
+    
+    night(config, playerInfoArray, gmInfo);
     return;
   }
   
   if(message.content.startsWith('噛む')) {
-    if(!permitCommand(config)) return;
+    if(!permitCommand(config,gmInfo,message)) return;
+    if(gmInfo.time != "night") {
+      message.reply( '夜にしか動けないのだ' );
+      return;
+    }
+
+    let whoCommanded = playerInfoArray[message.author.username];
+    if(whoCommanded.role != '人狼') {
+		  message.reply( '人狼じゃないから噛めないよ！' );
+      return 
+    }
+
     const killed = message.content.split(' ')[1];
-    let players = []
     if(!killed) {
 		  message.reply( '噛む人を入れてね！' );
       return 
     }
     
     const playerInfo = playerInfoArray[killed]
-    if(!playerInfo || !playerInfo) {
+    if(!playerInfo || !playerInfo.alive) {
 		  message.reply( 'この世に存在する相手を選んでね！' );
       return 
     }
 
-    playerInfo.alive = false;
+    if(playerInfo.role == '人狼') {
+		  message.reply( '狼同士は噛めないよ！' );
+      return 
+    }
 
+    if(!gmInfo.bite) {
+		  message.reply( '1回しか噛めないよ！' );
+      return;
+    }
+
+    playerInfo.alive = false;
     fs.writeFile(config.db_file, JSON.stringify(playerInfoArray), function (err) {
       if (err) return console.log(err);
       else console.log('bited!');
     });
+
+    gmInfo.death=killed;
+    gmInfo.bite=false;
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
   }
   
+  if(message.content.startsWith('占う')) {
+    if(!permitCommand(config,gmInfo,message)) return;
+    if(gmInfo.time != "night") {
+      message.reply( '夜にしか占えないよ' );
+      return;
+    }
+
+    let whoCommanded = playerInfoArray[message.author.username];
+    if(whoCommanded.role != '占い師') {
+		  message.reply( '占い師しか占えないよ！' );
+      return 
+    }
+
+    const fortune = message.content.split(' ')[1];
+    if(!fortune) {
+		  message.reply( '占う人をを入れてね！' );
+      return; 
+    }
+    
+    const playerInfo = playerInfoArray[fortune]
+    if(!playerInfo || !playerInfo.alive) {
+		  message.reply( 'この世に存在する相手を選んでね！' );
+      return;
+    }
+
+    if(!gmInfo.fortune) {
+		  message.reply( '1回しか占えないよ！' );
+      return;
+    }
+
+    const side = playerInfo.role == '人狼' ? '黒' : '白'
+    
+    message.reply( fortune + "さんは" + side + "です。" );
+
+    gmInfo.fortune=false;
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
+    return;
+  }
   
   if(message.content.startsWith('点呼！')) {
 		const names = ['砂だ','タナカ'];

@@ -12,7 +12,6 @@
     "start": "node main.js",
     "test": "node main.js"
   },
-  "engines": {
-    "node": "10.x"
-  }
+  "author": "",
+  "license": "ISC"
 }

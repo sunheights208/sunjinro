@@ -451,8 +451,6 @@ client.on('message', message => {
       return;
     }
 
-    votePlayer.shift()
-
     const vote = message.content.split(' ')[1];
     if(!vote) {
 		  message.reply( '投票する人を選んでね！' );

@@ -446,6 +446,7 @@ client.on('message', message => {
 
   if(message.content.startsWith('投票する')) {
     if(!permitCommand(config,gmInfo,message)) return;
+    message.reply( '不完全コマンド' );
     if(gmInfo.time != "morning") {
       message.reply( '朝しか投票できないよ' );
       return;
@@ -469,6 +470,16 @@ client.on('message', message => {
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
+    return;
+  }
+
+  if(message.content.startsWith('吊る')) {
+    message.reply( '不完全コマンド' );
+    return;
+  }
+
+  if(message.content.startsWith('守る')) {
+    message.reply( '不完全コマンド' );
     return;
   }
   

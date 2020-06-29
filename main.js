@@ -492,7 +492,7 @@ client.on('message', message => {
     votePlayer = shuffle( votePlayer )
 
     client.channels.cache.get(playerInfoArray[votePlayer[0]].channel_id).send("まずは" + votePlayer[0] + "さんから投票してください");
-    client.channels.cache.get(config.main_ch).send("まずは" + votePlayer[0] + "さんから投票してください！\n棄権する場合は「投票する 棄権」って入力してね！");
+    client.channels.cache.get(config.main_ch).send("まずは" + votePlayer[0] + "さんから投票してください！\n棄権する場合は「投票 棄権」って入力してね！");
 
     gmInfo.vote_turn=votePlayer;
     gmInfo.vote_list={};
@@ -503,7 +503,7 @@ client.on('message', message => {
     return;
   }
 
-  if(message.content.startsWith('投票する')) {
+  if(message.content.startsWith('投票')) {
     if(!permitCommand(config,gmInfo,message)) return;
     if(gmInfo.time != "morning") {
       message.reply( '朝しか投票できないよ' );
@@ -545,7 +545,7 @@ client.on('message', message => {
 
     if(gmInfo.vote_turn.length != 0) {
       client.channels.cache.get(playerInfoArray[gmInfo.vote_turn[0]].channel_id).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください");
-      client.channels.cache.get(config.main_ch).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！\n棄権する場合は「投票する 棄権」って入力してね！");
+      client.channels.cache.get(config.main_ch).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！\n棄権する場合は「投票 棄権」って入力してね！");
     } else {
       let todayResultMassage = "投票結果です。\n================\n一番投票数の多かった人を吊ってください。\n"
 

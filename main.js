@@ -44,6 +44,7 @@ const start = (config, playerInfoArray, gmInfo) => {
         playerInfo.role = role
         playerInfo.channel_id = channel.id
         playerInfo.alive = true
+        playerInfo.protect = true
         roleArray.shift();
       
         if(role == '人狼') {
@@ -71,7 +72,7 @@ const start = (config, playerInfoArray, gmInfo) => {
       let whiteList = [];
       if(playerData.role == '占い師'){
         for (let key in playerInfoArray) {
-          if(playerInfoArray[key].role != '人狼') whiteList.push(key)
+          if(playerInfoArray[key].role != '人狼' && playerInfoArray[key].role != '占い師') whiteList.push(key)
         }
         notification += shuffle( whiteList )[0] + "さんは白でした。（黒は出ないようになってるよ）";
       }
@@ -93,17 +94,24 @@ const start = (config, playerInfoArray, gmInfo) => {
     });
 }
 
+const situation = (playerInfoArray) => {
+  let display = "";
+  for (let key in playerInfoArray) {
+    const playerInfo = playerInfoArray[key]
+    console.log(playerInfo)
+    const displayAlive = playerInfo.alive ? "生存" : "死亡" 
+    display += 
+      key + "：" + displayAlive + "\n"
+  }
+  return display;
+}
+
 const morning = (config, playerInfoArray, gmInfo) => {
     let display = "【朝が来ました】\n";
 
     display += gmInfo.death ? gmInfo.death + "さんが噛まれて死にました。\n" : "昨晩は誰も噛まれませんでした。\n"
     
-    for (let key in playerInfoArray) {
-      const playerInfo = playerInfoArray[key]
-      const displayAlive = playerInfo.alive ? "生存" : "死亡" 
-      display += 
-        key + "：" + displayAlive + "\n"
-    }
+    display += situation(playerInfoArray);
   
     display += "========================="
     client.channels.cache.get(config.main_ch).send(display);
@@ -112,7 +120,13 @@ const morning = (config, playerInfoArray, gmInfo) => {
     client.channels.cache.get(config.main_ch).send("【この順番で話してね！】");
     client.channels.cache.get(config.main_ch).send(shuffle(joinPlayer));
 
+    // 朝系コマンドの初期化
+    gmInfo.vote_list = {};
+    gmInfo.vote_turn = [];
     gmInfo.time = "morning";
+    gmInfo.vote_time = true;
+    gmInfo.hang = false;
+    gmInfo.hang_done = false;
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
@@ -123,9 +137,11 @@ const night = (config, playerInfoArray, gmInfo) => {
     
     client.channels.cache.get(config.main_ch).send(display);
 
+    // 夜系コマンドの初期化
     gmInfo.time = "night";
     gmInfo.bite = true;
     gmInfo.fortune = true;
+    gmInfo.knight = true;
     gmInfo.death = "";
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
@@ -250,10 +266,15 @@ client.on('message', message => {
       const initGMFile = {
         start:false,
         time:"moring",
+        vote_time:true,
+        hang:true,
         bite:false,
         fortune:false,
+        knight:false,
         death:"",
-        vote_list:[],
+        vote_list:{},
+        vote_turn:[],
+        hang_done:false
       }
 
       fs.writeFile(config.gm_file, JSON.stringify(initGMFile), function (err) {
@@ -270,7 +291,10 @@ client.on('message', message => {
       
       
   if(message.content.startsWith('確認')) {
-    console.log(client.guilds.cache.get('221219415650205697').id)
+    const killed = message.content.split(' ')[1];
+    if(killed){
+    message.reply(JSON.stringify(gmInfo[killed]));
+    }
   }
   
   if(message.content.startsWith('開始')) {
@@ -321,64 +345,93 @@ client.on('message', message => {
     }
     
     const playerInfo = playerInfoArray[killed]
-    if(!playerInfo || !playerInfo.alive) {
+    if(killed != '見逃す' && (!playerInfo || !playerInfo.alive)) {
 		  message.reply( 'この世に存在する相手を選んでね！' );
       return 
     }
 
-    if(playerInfo.role == '人狼') {
-		  message.reply( '狼同士は噛めないよ！' );
-      return 
+    if(killed == '見逃す'){
+      message.reply( '噛まないことにしたよ！' );
+
+    } else {
+      if(playerInfo.role == '人狼') {
+        message.reply( '狼同士は噛めないよ！' );
+        return 
+      }
+
+      if(!gmInfo.bite) {
+        message.reply( '1回しか噛めないよ！' );
+        return;
+      }
+
+      message.reply( killed + 'さんを噛み殺した！' );
+
+      gmInfo.death=killed;
+      playerInfo.alive = false;
     }
 
-    if(!gmInfo.bite) {
-		  message.reply( '1回しか噛めないよ！' );
-      return;
-    }
-
-    playerInfo.alive = false;
     fs.writeFile(config.db_file, JSON.stringify(playerInfoArray), function (err) {
       if (err) return console.log(err);
       else console.log('bited!');
     });
 
-    gmInfo.death=killed;
     gmInfo.bite=false;
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
   }
 
-  // if(message.content.startsWith('吊る')) {
-  //   if(!permitCommand(config,gmInfo,message)) return;
-  //   if(gmInfo.time != "morning") {
-  //     message.reply( '朝しか吊れないよ' );
-  //     return;
-  //   }
+  if(message.content.startsWith('吊る')) {
+    if(!permitCommand(config,gmInfo,message)) return;
+    if(gmInfo.time != "morning") {
+      message.reply( '朝しか吊れないよ' );
+      return;
+    }
 
-  //   const hang = message.content.split(' ')[1];
-  //   if(!hang) {
-	// 	  message.reply( '釣る人を入れてね！' );
-  //     return 
-  //   }
+    // 吊った後の抑制
+    if(gmInfo.hang_done) {
+      message.reply( '1日に1回しか吊れないよ！' );
+      return;
+    }
+
+    // 投票前の抑制
+    if(!gmInfo.hang) {
+      message.reply( '投票後にしか吊れないよ！' );
+      return;
+    }
+
+    // 投票中の抑制
+    if(!gmInfo.vote_time) {
+      message.reply( '投票後にしか吊れないよ！' );
+      return;
+    }
+
+    const hang = message.content.split(' ')[1];
+    if(!hang) {
+		  message.reply( '吊る人を入れてね！' );
+      return 
+    }
     
-  //   const playerInfo = playerInfoArray[hang]
-  //   if(!playerInfo || !playerInfo.alive) {
-	// 	  message.reply( 'この世に存在する相手を選んでね！' );
-  //     return 
-  //   }
+    const playerInfo = playerInfoArray[hang];
+    if(!playerInfo || !playerInfo.alive) {
+		  message.reply( 'この世に存在する相手を選んでね！' );
+      return 
+    }
 
-  //   if(!gmInfo.hang) {
-	// 	  message.reply( '1回しか噛めないよ！' );
-  //     return;
-  //   }
+    playerInfo.alive = false;
+    fs.writeFile(config.db_file, JSON.stringify(playerInfoArray), function (err) {
+      if (err) return console.log(err);
+      else console.log('hangged!');
+    });
 
-  //   playerInfo.alive = false;
-  //   fs.writeFile(config.db_file, JSON.stringify(playerInfoArray), function (err) {
-  //     if (err) return console.log(err);
-  //     else console.log('hangged!');
-  //   });
-  // }
+    message.reply( hang + 'さんを吊りました！\n====================\n' + situation(playerInfoArray) );
+
+    gmInfo.hang_done=true;
+    gmInfo.hang=false;
+    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
+      if (err) return console.log(err);
+    });
+  }
   
   if(message.content.startsWith('占う')) {
     if(!permitCommand(config,gmInfo,message)) return;
@@ -423,21 +476,27 @@ client.on('message', message => {
 
   if(message.content.startsWith('投票タイム')) {
     if(!permitCommand(config,gmInfo,message)) return;
+    if(!gmInfo.vote_time) {
+      message.reply("投票タイムが終わるまで、このコマンドは使えないよ！");
+      return;
+    }
     if(gmInfo.time != "morning") {
       message.reply( '朝しか投票できないよ' );
       return;
     }
 
-
     let votePlayer = [];
     for (let key in playerInfoArray) {
-      votePlayer.push(key)
+      if(playerInfoArray[key].alive) votePlayer.push(key)
     }
     votePlayer = shuffle( votePlayer )
 
-    client.channels.cache.get(config.main_ch).send("まずは" + votePlayer[0] + "さんから投票してください");
+    client.channels.cache.get(playerInfoArray[votePlayer[0]].channel_id).send("まずは" + votePlayer[0] + "さんから投票してください");
+    client.channels.cache.get(config.main_ch).send("まずは" + votePlayer[0] + "さんから投票してください！\n棄権する場合は「投票する 棄権」って入力してね！");
 
-    gmInfo.vote_list=votePlayer;
+    gmInfo.vote_turn=votePlayer;
+    gmInfo.vote_list={};
+    gmInfo.vote_time=false;
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
@@ -446,9 +505,18 @@ client.on('message', message => {
 
   if(message.content.startsWith('投票する')) {
     if(!permitCommand(config,gmInfo,message)) return;
-    message.reply( '不完全コマンド' );
     if(gmInfo.time != "morning") {
       message.reply( '朝しか投票できないよ' );
+      return;
+    }
+
+    if(gmInfo.vote_time) {
+      message.reply( 'まだ投票タイムじゃないよ！' );
+      return;
+    }
+
+    if(playerInfoArray[gmInfo.vote_turn[0]].channel_id != message.channel.id){
+      message.reply(gmInfo.vote_turn[0] + "さんが投票する番だよ！\n自分のチャンネルで投票してね！");
       return;
     }
 
@@ -459,27 +527,46 @@ client.on('message', message => {
     }
     
     const playerInfo = playerInfoArray[vote]
-    if(!playerInfo || !playerInfo.alive) {
+    if(vote != '棄権' && (!playerInfo || !playerInfo.alive)) {
 		  message.reply( 'この世に存在する相手を選んでね！' );
       return;
     }
     
-    message.reply( vote + "さんに投票したよ" );
+    if(vote == '棄権'){
+      message.reply( "投票を棄権したよ" );
+    } else {
+      message.reply( vote + "さんに投票したよ" );
+    }
 
-    gmInfo.fortune=false;
+    let voteCount = gmInfo.vote_list[vote]
+
+    gmInfo.vote_list[vote] = voteCount ? voteCount + 1 : 1;
+    gmInfo.vote_turn.shift()
+
+    if(gmInfo.vote_turn.length != 0) {
+      client.channels.cache.get(playerInfoArray[gmInfo.vote_turn[0]].channel_id).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください");
+      client.channels.cache.get(config.main_ch).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！\n棄権する場合は「投票する 棄権」って入力してね！");
+    } else {
+      let todayResultMassage = "投票結果です。\n================\n一番投票数の多かった人を吊ってください。\n"
+
+      for (let key in gmInfo.vote_list) {
+        todayResultMassage += key + "：" + gmInfo.vote_list[key] + "票\n";
+      }
+
+      todayResultMassage += "票が分かれた場合は再度「投票タイム」コマンドを打ち、決選投票を行ってください。"
+
+      client.channels.cache.get(config.main_ch).send(todayResultMassage);
+      gmInfo.vote_time = true;
+      gmInfo.hang=true;
+    }
+
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
-    return;
-  }
-
-  if(message.content.startsWith('吊る')) {
-    message.reply( '不完全コマンド' );
-    return;
   }
 
   if(message.content.startsWith('守る')) {
-    message.reply( '不完全コマンド' );
+    message.reply( 'まだ誰も守ることはできないのだ' );
     return;
   }
   

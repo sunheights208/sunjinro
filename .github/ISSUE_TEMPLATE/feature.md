@@ -10,16 +10,11 @@ about: ワクワクするような新機能リクエスト
 
 ## 💪 Motivation
 
-(Issue を何故立てたのですか？)
 (Issue を作成した背景は？)
 
 ## 📖 Reference (optional)
 
 (参考リンクなどあれば)
-
-## 📆 Schedule (optional)
-
-(Closed になるまでのスケジュール)
 
 ## 📎 Tasks (optional)
 

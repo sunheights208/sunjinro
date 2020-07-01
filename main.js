@@ -3,6 +3,9 @@ const http = require('http');
 var fs = require("fs");
 require('dotenv').config();
 
+// master confog
+const voiceCannel = '726305512529854504';
+
 const shuffle = ([...array]) => {
   for (let i = array.length - 1; i >= 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -197,7 +200,7 @@ client.on('message', message => {
       let inputUserInfoArray = [];
       let inputRoleInfoArray = [];
       
-      client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
+    client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
         if(inputMemberArray.indexOf(user.displayName) !== -1 ){
           inputUserInfoArrayForChannel.push({
             username:user.displayName,
@@ -205,7 +208,7 @@ client.on('message', message => {
           });
           inputUserInfoArray.push(user.displayName);
         }
-      });
+      });  
       
       inputRoleArray.forEach(role => {
         if(config.allow_role.indexOf(role) !== -1 ){
@@ -290,11 +293,23 @@ client.on('message', message => {
   }
       
       
-  if(message.content.startsWith('確認')) {
-    const killed = message.content.split(' ')[1];
-    if(killed){
-    message.reply(JSON.stringify(gmInfo[killed]));
-    }
+  if(message.content.startsWith('ミュートする')) {
+    const mute = message.content.split(' ')[1];
+    client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
+      if(user.displayName == mute){
+        client.guilds.cache.get('221219415650205697').voiceStates.cache.get(user.id).setMute(true)
+      }
+    });
+  }
+      
+  if(message.content.startsWith('ミュート解除')) {
+    const mute = message.content.split(' ')[1];
+    const self = message.content.split(' ')[2];
+    client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
+      if(user.displayName == mute){
+        user.voice.setMute(false);
+      }
+    });
   }
   
   if(message.content.startsWith('開始')) {

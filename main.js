@@ -115,7 +115,7 @@ let allPlayerInfo = JSON.parse(playerData);
     //   '坂本龍馬「日本の夜明けぜよー！」\n==============='
     // ]
     let tales = [
-      'https://tenor.com/view/touhou-flandre-scarlet-eo-sd-gif-5822522'
+      'https://tenor.com/view/wake-up-morning-good-morning-get-up-gif-4736758'
     ]
     while(tales.length != 0){
       client.channels.cache.get(config.main_ch).send(tales[0]);

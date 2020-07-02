@@ -15,5 +15,9 @@
     "test": "node main.js"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "engines": {
+    "node": "14.1.0",
+    "npm": "6.14.1"
+  }
 }

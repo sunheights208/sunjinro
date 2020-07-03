@@ -77,3 +77,15 @@
     //   'この気もちはなんだろう',
     //   '坂本龍馬「日本の夜明けぜよー！」\n==============='
     // ]
+
+  
+
+    if(message.content.startsWith('喋る')) {
+      message.member.voice.setMute(false);
+      return;
+    }
+  
+    if(message.content.startsWith('黙る')) {
+      message.member.voice.setMute(true);
+      return;
+    }

@@ -261,16 +261,6 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
 
-  if(message.content.startsWith('喋る')) {
-    message.member.voice.setMute(false);
-    return;
-  }
-
-  if(message.content.startsWith('黙る')) {
-    message.member.voice.setMute(true);
-    return;
-  }
-
 })().catch(
   (err) => {
     console.log(err);

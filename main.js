@@ -3,13 +3,16 @@ const fs = require('fs/promises');
 require('dotenv').config();
 module.exports = {
   shuffle,
-  sendMassageToChannel,
+  sendMessageToChannel,
   permitCommand,
   serchRolePlayer,
   situation,
   sleep,
   turnManagement,
-  sendTurnMessage
+  facilitator,
+  breakUp,
+  gather,
+  serchPlayerNameFromMsg
 } = require('./modules/jinro_utility.js');
 
 const {
@@ -17,7 +20,8 @@ const {
   morning,
   night,
   jinroInit,
-  voteTime
+  voteTime,
+  twilight
 } = require('./modules/jinro_main.js');
 
 const {
@@ -61,84 +65,28 @@ let allPlayerInfo = JSON.parse(playerData);
   }
   
   if(message.content.startsWith('開始')) {
+    if(message.channel.id != config.main_ch){
+      message.reply('#village限定コマンド')
+      return
+    }
     await start(client, config, allPlayerInfo, gmInfo);
-    await morning(message, config, allPlayerInfo, gmInfo);
-    return;
-  }
-  
-  if(message.content.startsWith('朝')) {
-    if(!permitCommand(config,gmInfo,message)) return;
-    if(gmInfo.time != "night") {
-      message.reply( '夜が来て朝が来るのだ' );
-      return;
-    }
-    
-    await morning(message, config, allPlayerInfo, gmInfo);
+    await morning(client, message, config, allPlayerInfo, gmInfo);
+
+    // 初日だけ2回回す（パラメータでやればいいのでは？）
+    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
 
-  if(message.content.startsWith('夜')) {
+  if(message.content.startsWith('投票終了')) {
     if(!permitCommand(config,gmInfo,message)) return;
-    if(gmInfo.time != "morning") {
-      message.reply( '朝が来ないと、夜は来ない' );
-      return;
-    }
-    
-    await night(config, gmInfo);
-    spiritual(allPlayerInfo,gmInfo);
+    await twilight(client, config, allPlayerInfo, gmInfo, message);
+    spiritual(client,allPlayerInfo,gmInfo);
+    await night(client, config, allPlayerInfo, gmInfo, message);
 
-    await fs.writeFile(timerFile, '');
-    let nightRoles = ['占い師','騎士','人狼']
-    let timerSec = 30;
-    let counter = timerSec;
-    while(true){
-      timerFlag = await fs.readFile(timerFile, 'utf-8');
-      if(counter == timerSec || timerFlag) {
-        if(nightRoles.length == 0) break;
-        await sendTurnMessage(client,allPlayerInfo,config, nightRoles[0]);
-
-        if(nightRoles[0] == '占い師'){
-          gmInfo.bite = 1;
-          gmInfo.fortune = 0;
-          gmInfo.knight = 1;
-        } else if(nightRoles[0] == '騎士') {
-          gmInfo.bite = 1;
-          if(!timerFlag) gmInfo.fortune = 3;
-          gmInfo.knight = 0;
-        } else if(nightRoles[0] == '人狼') {
-          gmData = await fs.readFile(config.gm_file, 'utf-8');
-          gmInfo = JSON.parse(gmData);
-          gmInfo.bite = 0;
-          gmInfo.fortune= 3;
-          if(!timerFlag) gmInfo.knight = 3;
-        }
-
-        await fs.writeFile(timerFile, '');
-        await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
-
-        nightRoles.shift();
-        counter = 0;
-      }
-      await sleep(1);
-      ++counter;
-    }
-
-    // 夜の結果の読み込み
-    gmData = await fs.readFile(config.gm_file, 'utf-8');
-    gmInfo = JSON.parse(gmData);
-    playerData = await fs.readFile(config.db_file, 'utf-8');
-    allPlayerInfo = JSON.parse(playerData);
-
+    // 朝の通知
     await sleep(2);
-    // let tales = [
-    //   'この気もちはなんだろう',
-    //   '目に見えないエネルギーの流れが',
-    //   '大地からあしのうらを伝わって',
-    //   'ぼくの腹へ胸へそうしてのどへ',
-    //   '声にならないさけびとなってこみあげる',
-    //   'この気もちはなんだろう',
-    //   '坂本龍馬「日本の夜明けぜよー！」\n==============='
-    // ]
     let tales = [
       'https://tenor.com/view/wake-up-morning-good-morning-get-up-gif-4736758'
     ]
@@ -147,7 +95,17 @@ let allPlayerInfo = JSON.parse(playerData);
       tales.shift();
       await sleep(3);
     }
-    await morning(message, config, allPlayerInfo, gmInfo);
+
+    // 昨晩の結果を取得
+    gmData = await fs.readFile(config.gm_file, 'utf-8');
+    gmInfo = JSON.parse(gmData);
+    playerData = await fs.readFile(config.db_file, 'utf-8');
+    allPlayerInfo = JSON.parse(playerData);
+
+    // 朝の時間
+    await morning(client, message, config, allPlayerInfo, gmInfo);
+    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
   
@@ -163,27 +121,15 @@ let allPlayerInfo = JSON.parse(playerData);
 
   if(message.content.startsWith('吊る')) {
     if(!permitCommand(config,gmInfo,message)) return;
-    if(gmInfo.time != "morning") {
-      message.reply( '朝しか吊れないよ' );
+    let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
+    if(gmInfo.executor != commander) {
+      message.reply( '執行人しか実施できないよ' );
       return;
     }
 
     // 吊った後の抑制
     if(gmInfo.hang_done) {
       message.reply( '1日に1回しか吊れないよ！' );
-      return;
-    }
-
-    // // 投票前の抑制
-    if(!gmInfo.hang) {
-      // message.reply( '投票後にしか吊れないよ！' );
-      // return;
-      message.reply( '今はいつでも吊れるようにしてる' );
-    }
-
-    // 投票中の抑制
-    if(!gmInfo.vote_time) {
-      message.reply( '投票後にしか吊れないよ！' );
       return;
     }
 
@@ -220,25 +166,9 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
 
-  if(message.content.startsWith('投票タイム')) {
-    if(!permitCommand(config,gmInfo,message)) return;
-    await voteTime(client,config,gmInfo,message,allPlayerInfo);
-    return;
-  }
-
   if(message.content.startsWith('投票')) {
     if(!permitCommand(config,gmInfo,message)) return;
     await vote(client,config,gmInfo,message,allPlayerInfo);
-    return;
-  }
-
-  if(message.content.startsWith('メンション')) {
-    // console.log(client.users.cache.get(allPlayerInfo['おだがみ'].id))
-    // message.channel.send( 'まだ誰も守ることはできないのだ',{
-    //   allowedMentions:{
-    //     user:client.users.cache.get(allPlayerInfo['おだがみ'].id)
-    //   }
-    // } );
     return;
   }
 
@@ -326,72 +256,21 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
   
-  if(message.content.startsWith('タイマー')) {
-    let time = message.content.split(' ')[1];
-    message.reply( time + '秒カウントするよ' );
-    if(time > 5) {
-      time = time - 5
-      await sleep(time);
-      message.reply( '5秒前' );
-      await sleep(5);
-    } else {
-      message.reply( time + '秒前' );
-      await sleep(time);
-    }
-    message.reply( '終了' );
-  }
-  
-  if(message.content.startsWith('game')) {
-    const time = 10;
-    let counter = 0;
-    let timerFlag = "";
-
-
-    await fs.writeFile(timerFile, '');
-    message.reply( '10秒カウントするから、残り2秒で止めてね！' );
-    await sleep(3);
-    message.reply( 'よーい' );
-    await sleep(3);
-    message.reply( 'スタート！' );
-    while(true){
-      timerFlag = await fs.readFile(timerFile, 'utf-8');
-      if(counter == time || timerFlag) break;
-      await sleep(1);
-      ++counter;
-    }
-
-    if(counter == 2){
-      message.reply( '成功!' )
-    } else {
-      message.reply( counter + 'でした！残念!' )
-    }
+  if(message.content.startsWith('クリアメッセージ')) {
+    message.channel.bulkDelete(100)
     return;
   }
 
-
-  if(message.content.startsWith('stop')) {
-    await fs.writeFile(timerFile, 'stop');
+  if(message.content.startsWith('喋る')) {
+    message.member.voice.setMute(false);
     return;
   }
-      
-  if(message.content.startsWith('ミュートする')) {
-    const mute = message.content.split(' ')[1];
-    client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
-      if(user.displayName == mute){
-        client.guilds.cache.get('221219415650205697').voiceStates.cache.get(user.id).setMute(true)
-      }
-    });
+
+  if(message.content.startsWith('黙る')) {
+    message.member.voice.setMute(true);
+    return;
   }
-      
-  if(message.content.startsWith('ミュート解除')) {
-    const mute = message.content.split(' ')[1];
-    const self = message.content.split(' ')[2];
-    client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
-      if(user.displayName == mute){
-        user.voice.setMute(false);
-      }
-    });
-  }
+
 })().catch(
   (err) => {
     console.log(err);

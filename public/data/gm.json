@@ -1,1 +1,1 @@
-{"start":true,"time":"morning","vote_time":true,"hang":false,"bite":0,"fortune":3,"knight":3,"death":"","hangman":"","vote_list":{},"vote_turn":[],"hang_done":false}
+{"start":true,"time":"morning","vote_time":true,"final_vote_plaer":[],"hang":false,"hangman":"","hang_done":false,"death":"","bite":true,"fortune":true,"knight":true,"vote_list":{},"vote_turn":["のせ","かいかい","お砂","タナカ"],"toker":["タナカ","のせ","かいかい","お砂"]}

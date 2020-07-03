@@ -8,8 +8,8 @@ const fortune = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
     return;
   }
 
-  if(gmInfo.time != "night") {
-    message.reply( '夜にしか占えないよ' );
+  if(gmInfo.time != "twilight") {
+    message.reply( '黄昏時にしか占えないよ' );
     return;
   }
 
@@ -21,23 +21,13 @@ const fortune = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
 
   const fortune = message.content.split(' ')[1];
 
-  if(gmInfo.fortune == 1) {
-    message.reply( 'まだ出番じゃないよ！' );
-    return;
-  }
-
-  if(gmInfo.fortune == 2) {
+  if(!gmInfo.fortune) {
     message.reply( '1回しか占えないよ！' );
     return;
   }
 
-  if(gmInfo.fortune == 3) {
-    message.reply( '時間切れだよ！' );
-    return;
-  }
-
   if(!fortune) {
-    message.reply( '占う人をを入れてね！' );
+    message.reply( '占う人を入れてね！' );
     return; 
   }
   
@@ -51,19 +41,18 @@ const fortune = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   
   message.reply( fortune + "さんは" + side + "です。" );
 
-  gmInfo.fortune = 2;
+  gmInfo.fortune = false;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
-  await fs.writeFile(timerFile, 'false');
 }
 
-const spiritual = (allPlayerInfo,gmInfo) => {
+const spiritual = (client,allPlayerInfo,gmInfo) => {
     const spiritual = serchRolePlayer(allPlayerInfo,"霊能者")[0];
     if(gmInfo.hangman && spiritual && spiritual.alive){
       const hangman = gmInfo.hangman;
       const hangmanRoll = allPlayerInfo[hangman].role;
       let hangmanSide = (hangmanRoll == '人狼') ? '黒' : '白';
       const message = hangman + "さんは" + hangmanSide + "でした。"
-      sendMassageToChannel(spiritual.channel_id,message)
+      client.channels.cache.get(spiritual.channel_id).send(message);
     }
   }
 
@@ -71,12 +60,12 @@ const protect = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   if(!permitCommand(config,gmInfo,message)) return;
 
   if(!allPlayerInfo[message.channel.name].alive){
-    message.reply( '死んでるよ！' );
+    message.reply( '君！死んでるよ！' );
     return;
   }
 
-  if(gmInfo.time != "night") {
-    message.reply( '夜にしか動けないのだ' );
+  if(gmInfo.time != "twilight") {
+    message.reply( '黄昏時にしか動けないのだ' );
     return;
   }
 
@@ -92,18 +81,7 @@ const protect = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
     return;
   }
 
-  // MEMO: 自分も狼も噛めるようにした
-  // if(playerInfo.role == '人狼') {
-  //   message.reply( '狼同士は噛めないよ！' );
-  //   return 
-  // }
-
-  if(gmInfo.knight == 1) {
-    message.reply( 'まだ出番じゃないよ！' );
-    return;
-  }
-
-  if(gmInfo.knight == 2) {
+  if(!gmInfo.knight) {
     message.reply( '1回しか守れないよ！' );
     return;
   }
@@ -125,16 +103,15 @@ const protect = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   allPlayerInfo[protect].protect = true;
   await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
 
-  gmInfo.knight = 2;
+  gmInfo.knight = false;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
-  await fs.writeFile(timerFile, 'false');
 }
 
 const bite = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   if(!permitCommand(config,gmInfo,message)) return;
 
   if(!allPlayerInfo[message.channel.name].alive){
-    message.reply( '死んでるよ！' );
+    message.reply( '君！死んでるよ！' );
     return;
   }
 
@@ -165,18 +142,8 @@ const bite = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
     message.reply( '噛まないことにしたよ！' );
 
   } else {
-    // MEMO: 自分も狼も噛めるようにした
-    // if(playerInfo.role == '人狼') {
-    //   message.reply( '狼同士は噛めないよ！' );
-    //   return 
-    // }
 
-    if(gmInfo.bite == 1) {
-      message.reply( 'まだ出番じゃないよ！' );
-      return;
-    }
-
-    if(gmInfo.bite == 2) {
+    if(!gmInfo.bite) {
       message.reply( '1回しか噛めないよ！' );
       return;
     }
@@ -191,15 +158,15 @@ const bite = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   }
   await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
 
-  gmInfo.bite = 2;
+  gmInfo.bite = false;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
   await fs.writeFile(timerFile, 'false');
 }
 
-const vote = async(client,config,gmInfo,message,allPlayerInfo,timerFile) => {
+const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
 
   if(!allPlayerInfo[message.channel.name].alive){
-    message.reply( '死んでるよ！' );
+    message.reply( '君！死んでるよ！' );
     return;
   }
 
@@ -208,7 +175,7 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo,timerFile) => {
     return;
   }
 
-  if(gmInfo.vote_time) {
+  if(!gmInfo.vote_time) {
     message.reply( 'まだ投票タイムじゃないよ！' );
     return;
   }
@@ -236,27 +203,62 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo,timerFile) => {
     message.reply( vote + "さんに投票したよ" );
   }
 
-  let voteCount = gmInfo.vote_list[vote]
-
-  gmInfo.vote_list[vote] = voteCount ? voteCount + 1 : 1;
-  gmInfo.vote_turn.shift()
+  // リストの読み込み
+  if(gmInfo.vote_list[vote]){
+    gmInfo.vote_list[vote].count = gmInfo.vote_list[vote].count + 1;
+    gmInfo.vote_list[vote].player.push(gmInfo.vote_turn[0]);
+  } else {
+    gmInfo.vote_list[vote] = {
+      count:1,
+      player:[gmInfo.vote_turn[0]]
+    }
+  }
+  gmInfo.vote_turn.shift();
 
   // 結果発表のタイミング判定
   if(gmInfo.vote_turn.length != 0) {
     client.channels.cache.get(allPlayerInfo[gmInfo.vote_turn[0]].channel_id).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！\n棄権する場合は「投票 棄権」って入力してね！");
     client.channels.cache.get(config.main_ch).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！");
   } else {
-    let todayResultMassage = "投票結果です。\n================\n一番投票数の多かった人を吊ってください。\n"
-
+    
+    let todayResultMessage = "";
+    let hangmans = [];
     for (let key in gmInfo.vote_list) {
-      todayResultMassage += key + "：" + gmInfo.vote_list[key] + "票\n";
+      if(key != '棄権' ||
+        hangmans.length == 0 || 
+        gmInfo.vote_list[hangmans[0]].count == gmInfo.vote_list[key].count) {
+        hangmans.push(key);
+      } else if (
+        key != '棄権' ||
+        gmInfo.vote_list[hangmans[0]].count < gmInfo.vote_list[key].count){
+        hangmans = [];
+        hangmans.push(key);
+      }
+
+      todayResultMessage += key + "：" + gmInfo.vote_list[key].count + "票（" + gmInfo.vote_list[key].player + "）\n";
     }
 
-    todayResultMassage += "票が分かれた場合は再度「投票タイム」コマンドを打ち、決選投票を行ってください。"
+    let headerMessage = "投票結果です。\n================\n"
+    if(hangmans.length == 1){
+      headerMessage += "今晩処刑される人は" + hangmans[0] + "さんです。\n"
+      gmInfo.hang=true;
+      gmInfo.vote_time = false;
+    } else {
+      headerMessage += "次の" + hangmans.length + "人で決戦投票をします。=> " + hangmans + "\n"
+      gmInfo.final_vote_plaer = hangmans;
+    }
 
-    client.channels.cache.get(config.main_ch).send(todayResultMassage);
-    gmInfo.vote_time = true;
-    gmInfo.hang=true;
+    // 執行人選出
+    let executor;
+     shuffle(config.join_player).forEach(player =>{
+       if(!executor && hangmans.indexOf(player) !== -1){
+        executor = player;
+       }
+     })
+    let executorMessage = "執行人は" + executor + "さんです。"
+    gmInfo.executor = executor;
+
+    client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + executorMessage);
   }
 
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));

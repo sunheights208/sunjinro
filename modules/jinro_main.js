@@ -57,8 +57,25 @@ const jinroInit = async(client,message,configFile) =>{
     
       // チャンネルの準備
       inputUserInfoArrayForChannel.forEach(user => {
+        // テキストチャンネルの作成
         client.guilds.cache.get('221219415650205697').channels.create(user.username, {
           type: 'text',
+          permissionOverwrites: [
+            {
+              id: client.guilds.cache.get('221219415650205697').id,
+              deny: ['VIEW_CHANNEL']
+            },
+            {
+              id: user.id,
+              allow: ['VIEW_CHANNEL']
+            }
+          ],
+          parent: client.channels.cache.get('722131778403303577')
+        });
+
+        // ボイスチャンネルの作成
+        client.guilds.cache.get('221219415650205697').channels.create(user.username, {
+          type: 'voice',
           permissionOverwrites: [
             {
               id: client.guilds.cache.get('221219415650205697').id,
@@ -77,20 +94,8 @@ const jinroInit = async(client,message,configFile) =>{
 
       await fs.writeFile(config.db_file, JSON.stringify(playerInfoArrayStart));
     
-      // 0:許可　1:出番ではない 　2:実行済み　3:時間切れ
       const initGMFile = {
-        start:false,
-        time:"moring",
-        vote_time:true,
-        hang:true,
-        bite:1,
-        fortune:1,
-        knight:1,
-        death:"",
-        hangman:"",
-        vote_list:{},
-        vote_turn:[],
-        hang_done:false
+        start:false
       }
 
       await fs.writeFile(config.gm_file, JSON.stringify(initGMFile));
@@ -111,8 +116,7 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
     // channelIDの取得
     client.channels.cache.forEach(channel => {
       let playerInfo = allPlayerInfo[channel.name]
-      if(playerInfo) {
-        
+      if(playerInfo && channel.type == 'text') {
         const role = roleArray[0];
         playerInfo.role = role
         playerInfo.channel_id = channel.id
@@ -128,6 +132,8 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
 
           wolfsInfo[playerInfo.id] = channel.name;
         }
+      } else if (playerInfo && channel.type == 'voice'){
+        playerInfo.voice_channel_id = channel.id
       }
     });
 
@@ -158,24 +164,33 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
     gmInfo.start = true;
 
     // 朝系コマンドの初期化
-    gmInfo.vote_list = {};
-    gmInfo.vote_turn = [];
+    // #初期化
     gmInfo.time = "morning";
-    gmInfo.vote_time = true;
+    gmInfo.vote_time = false;
+    gmInfo.final_vote_plaer = [];
     gmInfo.hang = false;
+    gmInfo.executor ="";
     gmInfo.hangman = "";
     gmInfo.hang_done = false;
     gmInfo.death = "";
+    gmInfo.bite = false;
+    gmInfo.fortune = false;
+    gmInfo.knight = false;
+    gmInfo.vote_list = {};
+    gmInfo.vote_turn = [];
+    gmInfo.toker = [];
 
     await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
-const morning = async(message, config, allPlayerInfo, gmInfo) => {
+const morning = async(client, message, config, allPlayerInfo, gmInfo) => {
+    gather(client, allPlayerInfo);
     let display = "【朝が来ました】\n";
     let joinPlayer = config.join_player;
     joinPlayer = shuffle(joinPlayer);
     const jinroEmoji = config.emoji['人狼'];
+    gmInfo.toker = [];
 
     display += gmInfo.death ? jinroEmoji + gmInfo.death + "さんが噛まれて死にました。" + jinroEmoji + "\n": "昨晩は誰も噛まれませんでした。\n"
     
@@ -186,52 +201,128 @@ const morning = async(message, config, allPlayerInfo, gmInfo) => {
     joinPlayer.forEach(player => {
       if(allPlayerInfo[player].alive){
         display += player + "\n"
+        gmInfo.toker.push(player);
       }
     });
 
     message.channel.send(display);
 
     // 朝系コマンドの初期化
+    // #初期化
     gmInfo.vote_list = {};
     gmInfo.vote_turn = [];
     gmInfo.time = "morning";
-    gmInfo.vote_time = true;
+    gmInfo.vote_time = false;
+    gmInfo.final_vote_plaer = [];
     gmInfo.hang = false;
+    gmInfo.executor ="";
     gmInfo.hangman = "";
     gmInfo.hang_done = false;
 
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
-const night = async(config, gmInfo) => {
-    // 夜系コマンドの初期化
-    gmInfo.time = "night";
-    gmInfo.death = "";
-    await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+const twilight = async(client, config, allPlayerInfo, gmInfo) => {
+  breakUp(client);
+  // fs.existsSync('/etc/passwd')
+  let eveningRoles = ['占い師','騎士']
+
+  let display = "【黄昏時になりました】\n"
+  + "占い師と騎士は1分以内に行動を終わらせてね！"
+      
+  client.channels.cache.get(config.main_ch).send(display);
+
+  gmInfo.fortune = true;
+  gmInfo.knight = true;
+  gmInfo.time = 'twilight';
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+
+  eveningRoles.forEach(role => {
+    if(role == '占い師'){
+      command = '占う'
+    } else if(role == '騎士'){
+      command = '守る'
+    } else {
+      console.log('例外発生')
+      return;
+    }
+    client.channels.cache.get(serchRolePlayer(allPlayerInfo,role)[0].channel_id).send(
+      "1分以内に「" + command + " 〇〇」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
+    );
+  })
+
+  let evenigTimer = 20;
+  let counter = 0;
+  while(true){
+    gmData = await fs.readFile(config.gm_file, 'utf-8');
+    gmInfo = JSON.parse(gmData);
+    if(counter == evenigTimer) break;
+    await sleep(1);
+    ++counter;
+  }
+
+  // 騎士が行動してなかったら守りを外す
+  if(gmInfo.knight){
+    for(key in allPlayerInfo){
+      if(allPlayerInfo[key].protect){
+        allPlayerInfo[key].protect = false;
+      }
+    }
+  }
 }
 
-const voteTime = async(client,config,gmInfo,message,allPlayerInfo) => {
-  if(!gmInfo.vote_time) {
-    message.reply("投票タイムが終わるまで、このコマンドは使えないよ！");
-    return;
-  }
-  if(gmInfo.time != "morning") {
-    message.reply( '朝しか投票できないよ' );
-    return;
-  }
+const night = async(client, config, allPlayerInfo, gmInfo) => {
+    // 夜系コマンドの初期化
+    let display = "【夜になりました】\n"
+    + "人狼は1分以内に行動を終わらせてね！"
+        
+    client.channels.cache.get(config.main_ch).send(display);
+    client.channels.cache.get(serchRolePlayer(allPlayerInfo,'人狼')[0].channel_id).send(
+      "1分以内に「噛む 〇〇」もしくは「噛む 見逃す」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
+    );
+
+    gmInfo.time = "night";
+    gmInfo.death = "";
+    gmInfo.bite = true;
+    await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+
+    let nightTimer = 20;
+    let nightCounter = 0;
+    let gmData;
+    let innerGmInfo;
+    while(true){
+      gmData = await fs.readFile(config.gm_file, 'utf-8');
+      innerGmInfo = JSON.parse(gmData);
+      if(nightCounter == nightTimer) {
+        break;
+
+      } else if (!innerGmInfo.bite){
+        break;
+      }
+      await sleep(1);
+      ++nightCounter;
+    }
+}
+
+const voteTime = async(client,config,gmInfo,allPlayerInfo) => {
 
   let votePlayer = [];
+
+  // 投票券の配布
   for (let key in allPlayerInfo) {
     if(allPlayerInfo[key].alive) votePlayer.push(key)
   }
   votePlayer = shuffle( votePlayer )
 
+  let voteMassage = "【投票の時間が来ました】\n"
+  +"まずは" + votePlayer[0] + "さんから投票してください！"
+
   client.channels.cache.get(allPlayerInfo[votePlayer[0]].channel_id).send("まずは" + votePlayer[0] + "さんから投票してください\n棄権する場合は「投票 棄権」って入力してね！");
-  client.channels.cache.get(config.main_ch).send("まずは" + votePlayer[0] + "さんから投票してください！");
+  client.channels.cache.get(config.main_ch).send(voteMassage);
 
   gmInfo.vote_turn=votePlayer;
   gmInfo.vote_list={};
-  gmInfo.vote_time=false;
+  gmInfo.vote_time=true;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 module.exports = {
@@ -239,5 +330,6 @@ module.exports = {
     morning,
     night,
     jinroInit,
-    voteTime
+    voteTime,
+    twilight
 }

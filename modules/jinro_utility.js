@@ -8,7 +8,7 @@ const shuffle = ([...array]) => {
     return array;
 }
 
-const sendMassageToChannel = (id,message) => {
+const sendMessageToChannel = (id,message) => {
     client.channels.cache.get(id).send(message);
   }
 
@@ -33,6 +33,16 @@ const serchRolePlayer = (allPlayerInfo,serchRole) =>{
   }
   return player;
 }
+const serchPlayerNameFromMsg = (allPlayerInfo,id) =>{
+  let player;
+  for (let key in allPlayerInfo) {
+    const playerInfo = allPlayerInfo[key]
+    if(playerInfo.id == id) {
+      player = key
+    }
+  }
+  return player;
+}
 
 const situation = (allPlayerInfo) => {
   let display = "";
@@ -47,27 +57,6 @@ const situation = (allPlayerInfo) => {
 
 const sleep = sec => new Promise(resolve => setTimeout(resolve, sec * 1000));
 
-const sendTurnMessage = async(client,allPlayerInfo,config,turnRole) =>{
-  let display;
-  let role;
-  let command;
-  if(turnRole == '占い師'){
-    display = "【夜になりました。】\n";
-    display += "まずは占い師が行動してね！";
-    command = '占う';
-  } else if(turnRole == '騎士') {
-    display = "次に騎士が行動してね！";
-    command = '守る';
-  } else if (turnRole == '人狼') {
-    display = "最後に人狼が行動してね！"
-    command = '噛む';
-  }
-  client.channels.cache.get(config.main_ch).send(display);
-  client.channels.cache.get(serchRolePlayer(allPlayerInfo,turnRole)[0].channel_id).send(
-    "1分以内に「" + command + " 〇〇」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
-  );
-}
-
 const turnManagement = async(client,allPlayerInfo,config,turnRole) => {
   await sleep(10);
   // let gmData = await fs.readFile(config.gm_file, 'utf-8');
@@ -79,13 +68,55 @@ const turnManagement = async(client,allPlayerInfo,config,turnRole) => {
   // }
 }
 
+const facilitator = async(client, config, allPlayerInfo, tokerList) => {
+  await sleep(3);
+  for(let toker of tokerList) {
+    client.channels.cache.get('726305512529854504').members.forEach(user => {
+      if(user.displayName == toker){
+        user.voice.setMute(false);
+      } else {
+        user.voice.setMute(true);
+      }
+    });
+    client.channels.cache.get(config.main_ch).send(toker + "さん。発言してください。");
+    client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
+    await sleep(5);
+  }
+}
+
+const breakUp = (client) => {
+  client.channels.cache.get('726305512529854504').members.forEach(member => {
+    client.channels.cache.forEach(channel => {
+      if(channel.type == 'voice' && channel.name == member.user.username){
+        member.voice.setChannel(channel)
+      }
+    })
+  });
+}
+
+const gather = (client, allPlayerInfo) => {
+  for(let key in allPlayerInfo){
+    client.channels.cache.get(allPlayerInfo[key].voice_channel_id).members.forEach(member => {
+      member.voice.setChannel('726305512529854504')
+    })
+  }
+
+  // 人狼ちゃんねるも見に行く
+  client.channels.cache.get('726173962446438502').members.forEach(member => {
+    member.voice.setChannel('726305512529854504')
+  })
+}
+
 module.exports = {
     shuffle,
-    sendMassageToChannel,
+    sendMessageToChannel,
     permitCommand,
     serchRolePlayer,
     situation,
     sleep,
     turnManagement,
-    sendTurnMessage
+    facilitator,
+    breakUp,
+    gather,
+    serchPlayerNameFromMsg
 }

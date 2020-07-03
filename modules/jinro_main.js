@@ -77,14 +77,15 @@ const jinroInit = async(client,message,configFile) =>{
 
       await fs.writeFile(config.db_file, JSON.stringify(playerInfoArrayStart));
     
+      // 0:許可　1:出番ではない 　2:実行済み　3:時間切れ
       const initGMFile = {
         start:false,
         time:"moring",
         vote_time:true,
         hang:true,
-        bite:2,
-        fortune:2,
-        knight:2,
+        bite:1,
+        fortune:1,
+        knight:1,
         death:"",
         hangman:"",
         vote_list:{},
@@ -116,7 +117,7 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
         playerInfo.role = role
         playerInfo.channel_id = channel.id
         playerInfo.alive = true
-        playerInfo.protect = true
+        playerInfo.protect = false
         roleArray.shift();
       
         if(role == '人狼') {
@@ -156,12 +157,21 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
     client.channels.cache.get('726173962446438502').overwritePermissions(wolfsCannel);
     gmInfo.start = true;
 
+    // 朝系コマンドの初期化
+    gmInfo.vote_list = {};
+    gmInfo.vote_turn = [];
+    gmInfo.time = "morning";
+    gmInfo.vote_time = true;
+    gmInfo.hang = false;
+    gmInfo.hangman = "";
+    gmInfo.hang_done = false;
+    gmInfo.death = "";
+
     await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
-
-const morning = async(client, config, allPlayerInfo, gmInfo) => {
+const morning = async(message, config, allPlayerInfo, gmInfo) => {
     let display = "【朝が来ました】\n";
     let joinPlayer = config.join_player;
     joinPlayer = shuffle(joinPlayer);
@@ -179,7 +189,7 @@ const morning = async(client, config, allPlayerInfo, gmInfo) => {
       }
     });
 
-    client.channels.cache.get(config.main_ch).send(display);
+    message.channel.send(display);
 
     // 朝系コマンドの初期化
     gmInfo.vote_list = {};
@@ -196,9 +206,6 @@ const morning = async(client, config, allPlayerInfo, gmInfo) => {
 const night = async(config, gmInfo) => {
     // 夜系コマンドの初期化
     gmInfo.time = "night";
-    gmInfo.bite = 1;
-    gmInfo.fortune = 0;
-    gmInfo.knight = 1;
     gmInfo.death = "";
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }

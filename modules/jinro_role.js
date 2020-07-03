@@ -1,17 +1,23 @@
 const fs = require('fs/promises');
 
-const fortune = async(config,gmInfo,message,allPlayerInfo) => {
+const fortune = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   if(!permitCommand(config,gmInfo,message)) return;
+
+  if(!allPlayerInfo[message.channel.name].alive){
+    message.reply( '死んでるよ！' );
+    return;
+  }
+
   if(gmInfo.time != "night") {
     message.reply( '夜にしか占えないよ' );
     return;
   }
 
-  // let whoCommanded = allPlayerInfo[message.author.username];
-  // if(whoCommanded.role != '占い師') {
-  //   message.reply( '占い師しか占えないよ！' );
-  //   return 
-  // }
+  let whoCommanded = allPlayerInfo[message.channel.name];
+  if(whoCommanded.role != '占い師') {
+    message.reply( '占い師しか占えないよ！' );
+    return 
+  }
 
   const fortune = message.content.split(' ')[1];
 
@@ -47,6 +53,7 @@ const fortune = async(config,gmInfo,message,allPlayerInfo) => {
 
   gmInfo.fortune = 2;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  await fs.writeFile(timerFile, 'false');
 }
 
 const spiritual = (allPlayerInfo,gmInfo) => {
@@ -60,8 +67,77 @@ const spiritual = (allPlayerInfo,gmInfo) => {
     }
   }
 
-const bite = async(config,gmInfo,message,allPlayerInfo) => {
+const protect = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   if(!permitCommand(config,gmInfo,message)) return;
+
+  if(!allPlayerInfo[message.channel.name].alive){
+    message.reply( '死んでるよ！' );
+    return;
+  }
+
+  if(gmInfo.time != "night") {
+    message.reply( '夜にしか動けないのだ' );
+    return;
+  }
+
+  const protect = message.content.split(' ')[1];
+  if(!protect) {
+    message.reply( '守る人を入れてね！' );
+    return 
+  }
+  
+  const playerInfo = allPlayerInfo[protect]
+  if(!playerInfo || !playerInfo.alive) {
+    message.reply( 'この世に存在する相手を選んでね！' );
+    return;
+  }
+
+  // MEMO: 自分も狼も噛めるようにした
+  // if(playerInfo.role == '人狼') {
+  //   message.reply( '狼同士は噛めないよ！' );
+  //   return 
+  // }
+
+  if(gmInfo.knight == 1) {
+    message.reply( 'まだ出番じゃないよ！' );
+    return;
+  }
+
+  if(gmInfo.knight == 2) {
+    message.reply( '1回しか守れないよ！' );
+    return;
+  }
+
+  if(allPlayerInfo[protect].protect) {
+    message.reply( '2回連続で同じ人は守れないよ！' );
+    return;
+  }
+
+  message.reply( protect + 'さんを守っている！' );
+
+  // 一旦全員の守る情報を初期化
+  for(key in allPlayerInfo){
+    if(allPlayerInfo[key].protect){
+      allPlayerInfo[key].protect = false;
+    }
+  }
+
+  allPlayerInfo[protect].protect = true;
+  await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
+
+  gmInfo.knight = 2;
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  await fs.writeFile(timerFile, 'false');
+}
+
+const bite = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
+  if(!permitCommand(config,gmInfo,message)) return;
+
+  if(!allPlayerInfo[message.channel.name].alive){
+    message.reply( '死んでるよ！' );
+    return;
+  }
+
   if(gmInfo.time != "night") {
     message.reply( '夜にしか動けないのだ' );
     return;
@@ -105,18 +181,28 @@ const bite = async(config,gmInfo,message,allPlayerInfo) => {
       return;
     }
 
-    message.reply( killed + 'さんを噛み殺した！' );
-
-    gmInfo.death=killed;
-    playerInfo.alive = false;
+    if(playerInfo.protect){
+      message.reply( '襲撃失敗！騎士に守られている！' );
+    } else {
+      message.reply( killed + 'さんを噛み殺した！' );
+      gmInfo.death=killed;
+      allPlayerInfo[killed].alive = false;
+    }
   }
   await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
 
   gmInfo.bite = 2;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  await fs.writeFile(timerFile, 'false');
 }
 
-const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
+const vote = async(client,config,gmInfo,message,allPlayerInfo,timerFile) => {
+
+  if(!allPlayerInfo[message.channel.name].alive){
+    message.reply( '死んでるよ！' );
+    return;
+  }
+
   if(gmInfo.time != "morning") {
     message.reply( '朝しか投票できないよ' );
     return;
@@ -180,5 +266,6 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     spiritual,
     bite,
     fortune,
-    vote
+    vote,
+    protect
 }

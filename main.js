@@ -24,7 +24,8 @@ const {
   spiritual,
   bite,
   fortune,
-  vote
+  vote,
+  protect
 } = require('./modules/jinro_role.js');
 
 // Discord bot implements
@@ -48,8 +49,8 @@ client.on('message', message => {
 let configData = await fs.readFile(configFile, 'utf-8');
 let config = JSON.parse(configData);
 let gmData = await fs.readFile(config.gm_file, 'utf-8');
-let playerData = await fs.readFile(config.db_file, 'utf-8');
 let gmInfo = JSON.parse(gmData);
+let playerData = await fs.readFile(config.db_file, 'utf-8');
 let allPlayerInfo = JSON.parse(playerData);
   // bot自身の発言を除外 & 人狼カテゴリチャンネルの発言以外は弾く
   if (message.author.bot || message.channel.parentID != '722131778403303577') return;
@@ -61,7 +62,7 @@ let allPlayerInfo = JSON.parse(playerData);
   
   if(message.content.startsWith('開始')) {
     await start(client, config, allPlayerInfo, gmInfo);
-    await morning(client, config, allPlayerInfo, gmInfo);
+    await morning(message, config, allPlayerInfo, gmInfo);
     return;
   }
   
@@ -72,7 +73,7 @@ let allPlayerInfo = JSON.parse(playerData);
       return;
     }
     
-    await morning(client, config, allPlayerInfo, gmInfo);
+    await morning(message, config, allPlayerInfo, gmInfo);
     return;
   }
 
@@ -88,14 +89,33 @@ let allPlayerInfo = JSON.parse(playerData);
 
     await fs.writeFile(timerFile, '');
     let nightRoles = ['占い師','騎士','人狼']
-    let counter = 10;
-    let timerSec = 10;
-    while(nightRoles.length + 1 != 0){
+    let timerSec = 30;
+    let counter = timerSec;
+    while(true){
       timerFlag = await fs.readFile(timerFile, 'utf-8');
       if(counter == timerSec || timerFlag) {
-        if (nightRoles.length == 0) break;
+        if(nightRoles.length == 0) break;
         await sendTurnMessage(client,allPlayerInfo,config, nightRoles[0]);
+
+        if(nightRoles[0] == '占い師'){
+          gmInfo.bite = 1;
+          gmInfo.fortune = 0;
+          gmInfo.knight = 1;
+        } else if(nightRoles[0] == '騎士') {
+          gmInfo.bite = 1;
+          if(!timerFlag) gmInfo.fortune = 3;
+          gmInfo.knight = 0;
+        } else if(nightRoles[0] == '人狼') {
+          gmData = await fs.readFile(config.gm_file, 'utf-8');
+          gmInfo = JSON.parse(gmData);
+          gmInfo.bite = 0;
+          gmInfo.fortune= 3;
+          if(!timerFlag) gmInfo.knight = 3;
+        }
+
         await fs.writeFile(timerFile, '');
+        await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+
         nightRoles.shift();
         counter = 0;
       }
@@ -103,6 +123,11 @@ let allPlayerInfo = JSON.parse(playerData);
       ++counter;
     }
 
+    // 夜の結果の読み込み
+    gmData = await fs.readFile(config.gm_file, 'utf-8');
+    gmInfo = JSON.parse(gmData);
+    playerData = await fs.readFile(config.db_file, 'utf-8');
+    allPlayerInfo = JSON.parse(playerData);
 
     await sleep(2);
     // let tales = [
@@ -122,12 +147,17 @@ let allPlayerInfo = JSON.parse(playerData);
       tales.shift();
       await sleep(3);
     }
-    await morning(client, config, allPlayerInfo, gmInfo);
+    await morning(message, config, allPlayerInfo, gmInfo);
+    return;
+  }
+  
+  if(message.content.startsWith('守る')) {
+    await protect(config,gmInfo,message,allPlayerInfo,timerFile);
     return;
   }
   
   if(message.content.startsWith('噛む')) {
-    await bite(config,gmInfo,message,allPlayerInfo);
+    await bite(config,gmInfo,message,allPlayerInfo,timerFile);
     return;
   }
 
@@ -186,7 +216,7 @@ let allPlayerInfo = JSON.parse(playerData);
   }
   
   if(message.content.startsWith('占う')) {
-    await fortune(config,gmInfo,message,allPlayerInfo);
+    await fortune(config,gmInfo,message,allPlayerInfo,timerFile);
     return;
   }
 
@@ -202,8 +232,97 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
 
-  if(message.content.startsWith('守る')) {
-    message.reply( 'まだ誰も守ることはできないのだ' );
+  if(message.content.startsWith('メンション')) {
+    // console.log(client.users.cache.get(allPlayerInfo['おだがみ'].id))
+    // message.channel.send( 'まだ誰も守ることはできないのだ',{
+    //   allowedMentions:{
+    //     user:client.users.cache.get(allPlayerInfo['おだがみ'].id)
+    //   }
+    // } );
+    return;
+  }
+
+  if(message.content.startsWith('結果表示')) {
+    message.channel.send({embed: {
+      author: {
+        name: "サンハイツ人狼",
+        url: "https://github.com/sunheights208/sunjinro", // nameプロパティのテキストに紐付けられるURL
+        icon_url: client.user.avatarURL()
+      },
+      title: "狼陣営の勝ちです",
+      description: "まだ見た目だけ",
+      color: 0xED1B41,
+      timestamp: new Date(),
+      footer: {
+        icon_url: client.user.avatarURL,
+        text: "©️ sunheighs jinro"
+      },
+      thumbnail: {
+        url: "https://cdn.discordapp.com/emojis/723955735599251546"
+      },
+      fields: [
+        {
+          name: '\u200b',
+          value: '================================\n'
+          + "　　　　　　　　最終結果　　　　　　　　\n"
+          + '================================',
+          inline: false,
+        },
+        {
+          name:"------ 狼陣営 ------",
+          value: config.emoji['人狼'] + "かいかい\n\n" + config.emoji['狂人']+"タナカ",
+          inline: true
+        },
+        {
+          name: '\u200b',
+          value: '\u200b',
+          inline: true,
+        },
+        {
+          name:"------ 村人陣営 ------",
+          value: config.emoji['占い師'] + "おだがみ\n\n" 
+          + config.emoji['村人']+"お砂\n\n"
+          + config.emoji['騎士']+"のせ\n\n"
+          + config.emoji['霊能者']+"みく",
+          inline: true
+        },
+        {
+          name: '\u200b',
+          value: '================================\n'
+          + "　　　　　　　　ログ　　　　　　　　\n"
+          + '================================',
+          inline: false,
+        },
+        {
+          name: ":one:日目",
+          value: "----- 朝 -----\n"
+          + "処刑 => " + config.emoji['村人']+"お砂\n\n"
+          + "----- 夜 -----\n"
+          + "占い => " + config.emoji['騎士']+"のせ\n"
+          + "ガード => " + config.emoji['占い師']+"おだがみ\n"
+          + "殺害 => " + config.emoji['騎士']+"のせ\n\n"
+          + "================="
+        },
+        {
+          name:"------ 狼陣営 ------",
+          value: config.emoji['人狼'] + "かいかい\n\n" + config.emoji['狂人']+"タナカ",
+          inline: true
+        },
+        {
+          name: '\u200b',
+          value: '\u200b',
+          inline: true,
+        },
+        {
+          name:"------ 村人陣営 ------",
+          value: config.emoji['占い師'] + "おだがみ\n\n" 
+          + config.emoji['村人']+"`お砂 was hangged.`\n\n" 
+          + config.emoji['騎士']+"`のせ was dead.`\n\n"
+          + config.emoji['霊能者']+"みく",
+          inline: true
+        }
+      ]
+    }})
     return;
   }
   

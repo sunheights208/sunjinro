@@ -176,7 +176,7 @@ let allPlayerInfo = JSON.parse(playerData);
     message.channel.send({embed: {
       author: {
         name: "サンハイツ人狼",
-        url: "https://github.com/sunheights208/sunjinro", // nameプロパティのテキストに紐付けられるURL
+        url: "https://github.com/sunheights208/sunjinro",
         icon_url: client.user.avatarURL()
       },
       title: "狼陣営の勝ちです",

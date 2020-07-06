@@ -12,7 +12,8 @@ module.exports = {
   facilitator,
   breakUp,
   gather,
-  serchPlayerNameFromMsg
+  serchPlayerNameFromMsg,
+  finalVoteFacilitator
 } = require('./modules/jinro_utility.js');
 
 const {
@@ -56,30 +57,8 @@ let gmData = await fs.readFile(config.gm_file, 'utf-8');
 let gmInfo = JSON.parse(gmData);
 let playerData = await fs.readFile(config.db_file, 'utf-8');
 let allPlayerInfo = JSON.parse(playerData);
-  // bot自身の発言を除外 & 人狼カテゴリチャンネルの発言以外は弾く
-  if (message.author.bot || message.channel.parentID != '722131778403303577') return;
-  
-  if(message.content.startsWith('初期化')) {
-    await jinroInit(client,message,configFile);
-    return;
-  }
-  
-  if(message.content.startsWith('開始')) {
-    if(message.channel.id != config.main_ch){
-      message.reply('#village限定コマンド')
-      return
-    }
-    await start(client, config, allPlayerInfo, gmInfo);
-    await morning(client, message, config, allPlayerInfo, gmInfo);
 
-    // 初日だけ2回回す（パラメータでやればいいのでは？）
-    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
-    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
-    await voteTime(client,config,gmInfo,allPlayerInfo);
-    return;
-  }
-
-  if(message.content.startsWith('投票終了')) {
+  if(message.author.bot && message.content.startsWith('投票終了')) {
     if(!permitCommand(config,gmInfo,message)) return;
     await twilight(client, config, allPlayerInfo, gmInfo, message);
     spiritual(client,allPlayerInfo,gmInfo);
@@ -104,6 +83,34 @@ let allPlayerInfo = JSON.parse(playerData);
 
     // 朝の時間
     await morning(client, message, config, allPlayerInfo, gmInfo);
+    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    await voteTime(client,config,gmInfo,allPlayerInfo);
+    return;
+  }
+  // bot自身の発言を除外 & 人狼カテゴリチャンネルの発言以外は弾く
+  if (message.author.bot || message.channel.parentID != '722131778403303577') return;
+  
+  if(message.content.startsWith('初期化')) {
+    await jinroInit(client,message,configFile);
+    return;
+  }
+  
+  if(message.content.startsWith('開始')) {
+    if(message.channel.id != config.main_ch){
+      message.reply('#village限定コマンド')
+      return
+    }
+    await start(client, config, allPlayerInfo, gmInfo);
+    await morning(client, message, config, allPlayerInfo, gmInfo);
+
+    // 初日だけ2回回す（パラメータでやればいいのでは？）
+    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    await voteTime(client,config,gmInfo,allPlayerInfo);
+    return;
+  }
+  
+  if(message.content.startsWith('決選投票')) {
     await facilitator(client, config, allPlayerInfo, gmInfo.toker);
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
@@ -145,6 +152,11 @@ let allPlayerInfo = JSON.parse(playerData);
       return 
     }
 
+    if(hang != gmInfo.hangman) {
+		  message.reply( 'あれ？吊る人が違うよ？' );
+      return 
+    }
+
     playerInfo.alive = false;
     fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo), function (err) {
       if (err) return console.log(err);
@@ -155,10 +167,11 @@ let allPlayerInfo = JSON.parse(playerData);
 
     gmInfo.hang_done=true;
     gmInfo.hang=false;
-    gmInfo.hangman=hang;
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
+    client.channels.cache.get(config.main_ch).send("投票終了");
+    return;
   }
   
   if(message.content.startsWith('占う')) {

@@ -1,1 +1,1 @@
-{"start":true,"time":"morning","vote_time":true,"final_vote_plaer":[],"hang":false,"hangman":"","hang_done":false,"death":"","bite":true,"fortune":true,"knight":true,"vote_list":{},"vote_turn":["のせ","かいかい","お砂","タナカ"],"toker":["タナカ","のせ","かいかい","お砂"]}
+{"start":true,"time":"night","vote_time":false,"final_vote_plaer":[],"hang":false,"hangman":"かいかい","hang_done":true,"death":"","bite":true,"fortune":true,"knight":true,"vote_list":{"かいかい":{"count":4,"player":["お砂","タナカ","かいかい","おだがみ"]}},"vote_turn":[],"toker":["お砂","おだがみ","タナカ","かいかい"],"executor":"おだがみ"}

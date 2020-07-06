@@ -84,6 +84,27 @@ const facilitator = async(client, config, allPlayerInfo, tokerList) => {
   }
 }
 
+const finalVoteFacilitator = async(client, config, allPlayerInfo, tokerList) => {
+  await sleep(5);
+
+  for(let toker of tokerList) {
+    client.channels.cache.get('726305512529854504').members.forEach(user => {
+      if(user.displayName == toker) user.voice.setMute(false);
+    });
+    client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
+  }
+  client.channels.cache.get(config.main_ch).send("それでは次の"+tokerList.length + "名の方に発言を許可します。\n[ " + tokerList + "]");
+
+  // 議論タイム
+  await sleep(10);
+
+  for(let toker of tokerList) {
+    client.channels.cache.get('726305512529854504').members.forEach(user => {
+      if(user.displayName == toker) user.voice.setMute(true);
+    });
+  }
+}
+
 const breakUp = (client) => {
   client.channels.cache.get('726305512529854504').members.forEach(member => {
     client.channels.cache.forEach(channel => {
@@ -118,5 +139,6 @@ module.exports = {
     facilitator,
     breakUp,
     gather,
-    serchPlayerNameFromMsg
+    serchPlayerNameFromMsg,
+    finalVoteFacilitator
 }

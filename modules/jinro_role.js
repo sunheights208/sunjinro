@@ -133,29 +133,24 @@ const bite = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   }
   
   const playerInfo = allPlayerInfo[killed]
-  if(killed != '見逃す' && (!playerInfo || !playerInfo.alive)) {
+  if(!playerInfo || !playerInfo.alive) {
     message.reply( 'この世に存在する相手を選んでね！' );
     return 
   }
 
-  if(killed == '見逃す'){
-    message.reply( '噛まないことにしたよ！' );
-
-  } else {
-
-    if(!gmInfo.bite) {
-      message.reply( '1回しか噛めないよ！' );
-      return;
-    }
-
-    if(playerInfo.protect){
-      message.reply( '襲撃失敗！騎士に守られている！' );
-    } else {
-      message.reply( killed + 'さんを噛み殺した！' );
-      gmInfo.death=killed;
-      allPlayerInfo[killed].alive = false;
-    }
+  if(!gmInfo.bite) {
+    message.reply( '1回しか噛めないよ！' );
+    return;
   }
+
+  if(playerInfo.protect){
+    message.reply( '襲撃失敗！騎士に守られている！' );
+  } else {
+    message.reply( killed + 'さんを噛み殺した！' );
+    gmInfo.death=killed;
+    allPlayerInfo[killed].alive = false;
+  } 
+
   await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
 
   gmInfo.bite = false;

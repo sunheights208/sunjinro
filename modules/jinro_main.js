@@ -104,7 +104,8 @@ const jinroInit = async(client,message,configFile) =>{
 
 const start = async(client, config, allPlayerInfo, gmInfo) => {
     let roleRaw = config.role_raw;
-    let roleArray = shuffle(roleRaw);
+    // let roleArray = shuffle(roleRaw);
+    let roleArray = roleRaw.concat()
     let wolfsCannel = [
       {
         id: client.guilds.cache.get('221219415650205697').id,
@@ -170,6 +171,7 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
     gmInfo.final_vote_plaer = [];
     gmInfo.hang = false;
     gmInfo.executor ="";
+    gmInfo.talkNow = false;
     gmInfo.hangman = "";
     gmInfo.hang_done = false;
     gmInfo.death = "";
@@ -223,7 +225,7 @@ const morning = async(client, message, config, allPlayerInfo, gmInfo) => {
 }
 
 const twilight = async(client, config, allPlayerInfo, gmInfo) => {
-  breakUp(client);
+  breakUp(client,allPlayerInfo);
   // fs.existsSync('/etc/passwd')
   let eveningRoles = ['占い師','騎士']
 
@@ -278,7 +280,7 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
         
     client.channels.cache.get(config.main_ch).send(display);
     client.channels.cache.get(serchRolePlayer(allPlayerInfo,'人狼')[0].channel_id).send(
-      "1分以内に「噛む 〇〇」もしくは「噛む 見逃す」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
+      "1分以内に「噛む 〇〇」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
     );
 
     gmInfo.time = "night";

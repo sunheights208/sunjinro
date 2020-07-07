@@ -12,7 +12,13 @@ const sendMessageToChannel = (id,message) => {
     client.channels.cache.get(id).send(message);
   }
 
-const permitCommand = (config,gmInfo,message) => {
+const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
+  if(message.author.bot && 
+    !message.content.startsWith('吊る') && 
+    !message.content.startsWith('===== 投票終了 =====')){ 
+      console.log("authr err")
+      return false;}
+
   if(config.join_player.length == 0){
     client.channels.cache.get(config.main_ch).send("初期化してね！");
     return false
@@ -22,6 +28,17 @@ const permitCommand = (config,gmInfo,message) => {
     message.reply( '開始してね！' );
     return false
   }
+
+  if(!message.author.bot && !allPlayerInfo[message.author.username].alive){
+    message.reply( '君！死んでるよ！' );
+    return;
+  }
+
+  if(gmInfo.talkNow && !gmInfo.hangman){
+    message.reply( '会話中はコマンドが打てないよ！' );
+    return false
+  }
+
   return true
 }
 
@@ -68,7 +85,10 @@ const turnManagement = async(client,allPlayerInfo,config,turnRole) => {
   // }
 }
 
-const facilitator = async(client, config, allPlayerInfo, tokerList) => {
+const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
+  gmInfo.talkNow = true;
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+
   await sleep(3);
   for(let toker of tokerList) {
     client.channels.cache.get('726305512529854504').members.forEach(user => {
@@ -82,11 +102,23 @@ const facilitator = async(client, config, allPlayerInfo, tokerList) => {
     client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
     await sleep(5);
   }
+
+  // 最後に全員黙らせる
+  client.channels.cache.get('726305512529854504').members.forEach(user => {
+    if(user.displayName == toker){
+      user.voice.setMute(true);
+    }
+  });
+
+  gmInfo.talkNow = false;
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
-const finalVoteFacilitator = async(client, config, allPlayerInfo, tokerList) => {
-  await sleep(5);
+const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
+  gmInfo.talkNow = true;
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
+  await sleep(5);
   for(let toker of tokerList) {
     client.channels.cache.get('726305512529854504').members.forEach(user => {
       if(user.displayName == toker) user.voice.setMute(false);
@@ -103,15 +135,21 @@ const finalVoteFacilitator = async(client, config, allPlayerInfo, tokerList) => 
       if(user.displayName == toker) user.voice.setMute(true);
     });
   }
+  gmInfo.talkNow = false;
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
-const breakUp = (client) => {
+const breakUp = (client, allPlayerInfo) => {
   client.channels.cache.get('726305512529854504').members.forEach(member => {
-    client.channels.cache.forEach(channel => {
-      if(channel.type == 'voice' && channel.name == member.user.username){
-        member.voice.setChannel(channel)
-      }
-    })
+    if(allPlayerInfo[member.user.username].role == '人狼'){
+        member.voice.setChannel(client.channels.cache.get('726173962446438502'))
+    } else {
+      client.channels.cache.forEach(channel => {
+        if(channel.type == 'voice' && channel.name == member.user.username){
+          member.voice.setChannel(channel)
+        }
+      })
+    }
   });
 }
 
@@ -128,6 +166,95 @@ const gather = (client, allPlayerInfo) => {
   })
 }
 
+const resultCheck = async(client, config, message, allPlayerInfo) => {
+  let whiteSide = 0;
+  let darkSide = 0;
+  for(let key in allPlayerInfo){
+    let role = allPlayerInfo[key].role;
+    let alive = allPlayerInfo[key].alive;
+    if(alive && role == '人狼') ++darkSide
+    if(alive && (role != '人狼' && role != '狂人')) ++whiteSide;
+  }
+  let winSide="";
+  if(darkSide == 0){
+    winSide = 'white';
+  } else if(darkSide >= whiteSide) {
+    winSide = 'dark';
+  } else {
+    return true
+  }
+
+  await sleep(3);
+
+  // 結果作成
+  let resultDark = "";
+  let resultWhite = "";
+  for(let key in allPlayerInfo){
+    const role = allPlayerInfo[key].role;
+    const alive = allPlayerInfo[key].alive;
+    if(role == '人狼' || role == '狂人') {
+      if(!alive) {
+        resultDark += config.emoji[role] + "`" + key + " is dead`\n\n"
+      } else {
+        resultDark += config.emoji[role] + key + "\n\n"
+      }
+    }
+    if(role != '人狼' && role != '狂人') {
+      if(!alive) {
+        resultWhite += config.emoji[role] + "`" + key + " is dead`\n\n"
+      } else {
+        resultWhite += config.emoji[role] + key + "\n\n"
+      }
+    }
+  }
+  
+ const result = {embed: {
+    author: {
+      name: "サンハイツ人狼",
+      url: "https://github.com/sunheights208/sunjinro",
+      icon_url: client.user.avatarURL()
+    },
+    title: winSide == 'dark' ? "狼陣営の勝ちです": "村人陣営の勝ちです",
+    description: "何か書く",
+    color: config.result_color[winSide],
+    timestamp: new Date(),
+    footer: {
+      icon_url: client.user.avatarURL,
+      text: "©️ sunheighs jinro"
+    },
+    thumbnail: {
+      url: "https://cdn.discordapp.com/emojis/" + config.result_emoji[winSide]
+    },
+    fields: [
+      {
+        name: '\u200b',
+        value: '================================\n'
+        + "　　　　　　　　最終結果　　　　　　　　\n"
+        + '================================',
+        inline: false,
+      },
+      {
+        name:"------ 狼陣営 ------",
+        value: resultDark,
+        inline: true
+      },
+      {
+        name: '\u200b',
+        value: '\u200b',
+        inline: true,
+      },
+      {
+        name:"------ 村人陣営 ------",
+        value: resultWhite,
+        inline: true
+      }
+    ]
+  }};
+
+  message.channel.send(result);
+  return false;
+}
+
 module.exports = {
     shuffle,
     sendMessageToChannel,
@@ -140,5 +267,6 @@ module.exports = {
     breakUp,
     gather,
     serchPlayerNameFromMsg,
-    finalVoteFacilitator
+    finalVoteFacilitator,
+    resultCheck
 }

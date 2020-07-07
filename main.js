@@ -13,7 +13,8 @@ module.exports = {
   breakUp,
   gather,
   serchPlayerNameFromMsg,
-  finalVoteFacilitator
+  finalVoteFacilitator,
+  resultCheck
 } = require('./modules/jinro_utility.js');
 
 const {
@@ -58,37 +59,8 @@ let gmInfo = JSON.parse(gmData);
 let playerData = await fs.readFile(config.db_file, 'utf-8');
 let allPlayerInfo = JSON.parse(playerData);
 
-  if(message.author.bot && message.content.startsWith('投票終了')) {
-    if(!permitCommand(config,gmInfo,message)) return;
-    await twilight(client, config, allPlayerInfo, gmInfo, message);
-    spiritual(client,allPlayerInfo,gmInfo);
-    await night(client, config, allPlayerInfo, gmInfo, message);
-
-    // 朝の通知
-    await sleep(2);
-    let tales = [
-      'https://tenor.com/view/wake-up-morning-good-morning-get-up-gif-4736758'
-    ]
-    while(tales.length != 0){
-      client.channels.cache.get(config.main_ch).send(tales[0]);
-      tales.shift();
-      await sleep(3);
-    }
-
-    // 昨晩の結果を取得
-    gmData = await fs.readFile(config.gm_file, 'utf-8');
-    gmInfo = JSON.parse(gmData);
-    playerData = await fs.readFile(config.db_file, 'utf-8');
-    allPlayerInfo = JSON.parse(playerData);
-
-    // 朝の時間
-    await morning(client, message, config, allPlayerInfo, gmInfo);
-    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
-    await voteTime(client,config,gmInfo,allPlayerInfo);
-    return;
-  }
-  // bot自身の発言を除外 & 人狼カテゴリチャンネルの発言以外は弾く
-  if (message.author.bot || message.channel.parentID != '722131778403303577') return;
+  //人狼カテゴリチャンネルの発言以外は弾く
+  if (message.channel.parentID != '722131778403303577') return;
   
   if(message.content.startsWith('初期化')) {
     await jinroInit(client,message,configFile);
@@ -101,17 +73,29 @@ let allPlayerInfo = JSON.parse(playerData);
       return
     }
     await start(client, config, allPlayerInfo, gmInfo);
+    if(!await resultCheck(client, config, message, allPlayerInfo)) return false;
     await morning(client, message, config, allPlayerInfo, gmInfo);
 
     // 初日だけ2回回す（パラメータでやればいいのでは？）
-    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
-    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
+    // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
   
   if(message.content.startsWith('決選投票')) {
-    await facilitator(client, config, allPlayerInfo, gmInfo.toker);
+    if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
+    let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
+    if(gmInfo.executor != commander) {
+      message.reply( '執行人しか実施できないよ' );
+      return;
+    }
+
+    let finalMessage = "決選投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
+    client.channels.cache.get(config.main_ch).send(finalMessage);
+    // 執行人と話してるので無くてOK
+    // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.final_vote_plaer);
+    await sleep (5);
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
@@ -125,11 +109,15 @@ let allPlayerInfo = JSON.parse(playerData);
     await bite(config,gmInfo,message,allPlayerInfo,timerFile);
     return;
   }
+  if(message.content.startsWith('チェック')) {
+    await resultCheck(client, config, message, allPlayerInfo);
+    return;
+  }
 
   if(message.content.startsWith('吊る')) {
-    if(!permitCommand(config,gmInfo,message)) return;
+    if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
-    if(gmInfo.executor != commander) {
+    if(gmInfo.executor != commander && !message.author.bot) {
       message.reply( '執行人しか実施できないよ' );
       return;
     }
@@ -142,7 +130,7 @@ let allPlayerInfo = JSON.parse(playerData);
 
     const hang = message.content.split(' ')[1];
     if(!hang) {
-		  message.reply( '吊る人を入れてね！' );
+		  message.reply( '対象を入れてね！' );
       return 
     }
     
@@ -170,7 +158,9 @@ let allPlayerInfo = JSON.parse(playerData);
     fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
       if (err) return console.log(err);
     });
-    client.channels.cache.get(config.main_ch).send("投票終了");
+
+    if(!await resultCheck(client, config, message, allPlayerInfo)) return; 
+    client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
     return;
   }
   
@@ -180,92 +170,45 @@ let allPlayerInfo = JSON.parse(playerData);
   }
 
   if(message.content.startsWith('投票')) {
-    if(!permitCommand(config,gmInfo,message)) return;
+    if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     await vote(client,config,gmInfo,message,allPlayerInfo);
     return;
   }
 
-  if(message.content.startsWith('結果表示')) {
-    message.channel.send({embed: {
-      author: {
-        name: "サンハイツ人狼",
-        url: "https://github.com/sunheights208/sunjinro",
-        icon_url: client.user.avatarURL()
-      },
-      title: "狼陣営の勝ちです",
-      description: "まだ見た目だけ",
-      color: 0xED1B41,
-      timestamp: new Date(),
-      footer: {
-        icon_url: client.user.avatarURL,
-        text: "©️ sunheighs jinro"
-      },
-      thumbnail: {
-        url: "https://cdn.discordapp.com/emojis/723955735599251546"
-      },
-      fields: [
-        {
-          name: '\u200b',
-          value: '================================\n'
-          + "　　　　　　　　最終結果　　　　　　　　\n"
-          + '================================',
-          inline: false,
-        },
-        {
-          name:"------ 狼陣営 ------",
-          value: config.emoji['人狼'] + "かいかい\n\n" + config.emoji['狂人']+"タナカ",
-          inline: true
-        },
-        {
-          name: '\u200b',
-          value: '\u200b',
-          inline: true,
-        },
-        {
-          name:"------ 村人陣営 ------",
-          value: config.emoji['占い師'] + "おだがみ\n\n" 
-          + config.emoji['村人']+"お砂\n\n"
-          + config.emoji['騎士']+"のせ\n\n"
-          + config.emoji['霊能者']+"みく",
-          inline: true
-        },
-        {
-          name: '\u200b',
-          value: '================================\n'
-          + "　　　　　　　　ログ　　　　　　　　\n"
-          + '================================',
-          inline: false,
-        },
-        {
-          name: ":one:日目",
-          value: "----- 朝 -----\n"
-          + "処刑 => " + config.emoji['村人']+"お砂\n\n"
-          + "----- 夜 -----\n"
-          + "占い => " + config.emoji['騎士']+"のせ\n"
-          + "ガード => " + config.emoji['占い師']+"おだがみ\n"
-          + "殺害 => " + config.emoji['騎士']+"のせ\n\n"
-          + "================="
-        },
-        {
-          name:"------ 狼陣営 ------",
-          value: config.emoji['人狼'] + "かいかい\n\n" + config.emoji['狂人']+"タナカ",
-          inline: true
-        },
-        {
-          name: '\u200b',
-          value: '\u200b',
-          inline: true,
-        },
-        {
-          name:"------ 村人陣営 ------",
-          value: config.emoji['占い師'] + "おだがみ\n\n" 
-          + config.emoji['村人']+"`お砂 was hangged.`\n\n" 
-          + config.emoji['騎士']+"`のせ was dead.`\n\n"
-          + config.emoji['霊能者']+"みく",
-          inline: true
-        }
-      ]
-    }})
+  if(message.author.bot && message.content.startsWith('===== 投票終了 =====')) {
+    if(!message.author.bot) {
+      message.reply( 'bot限定コマンド' );
+      return;
+    }
+
+    if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
+    await sleep(5);
+    await twilight(client, config, allPlayerInfo, gmInfo, message);
+    spiritual(client,allPlayerInfo,gmInfo);
+    await night(client, config, allPlayerInfo, gmInfo, message);
+
+    // 朝の通知
+    await sleep(2);
+    let tales = [
+      'https://tenor.com/view/wake-up-morning-good-morning-get-up-gif-4736758'
+    ]
+    while(tales.length != 0){
+      client.channels.cache.get(config.main_ch).send(tales[0]);
+      tales.shift();
+      await sleep(3);
+    }
+
+    // 昨晩の結果を取得
+    gmData = await fs.readFile(config.gm_file, 'utf-8');
+    gmInfo = JSON.parse(gmData);
+    playerData = await fs.readFile(config.db_file, 'utf-8');
+    allPlayerInfo = JSON.parse(playerData);
+
+    // 朝の時間
+    if(!await resultCheck(client, config, message, allPlayerInfo)) return false;
+    await morning(client, message, config, allPlayerInfo, gmInfo);
+    await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
+    await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
   

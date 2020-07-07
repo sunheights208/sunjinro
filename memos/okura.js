@@ -89,3 +89,91 @@
       message.member.voice.setMute(true);
       return;
     }
+  
+
+    const result = (client, config, message, allPlayerInfo) => {
+      for(let key in allPlayerInfo){
+        console.log(allPlayerInfo[key])
+      }
+    
+      message.channel.send({embed: {
+        author: {
+          name: "サンハイツ人狼",
+          url: "https://github.com/sunheights208/sunjinro",
+          icon_url: client.user.avatarURL()
+        },
+        title: "狼陣営の勝ちです",
+        description: "まだ見た目だけ",
+        color: 0xED1B41,
+        timestamp: new Date(),
+        footer: {
+          icon_url: client.user.avatarURL,
+          text: "©️ sunheighs jinro"
+        },
+        thumbnail: {
+          url: "https://cdn.discordapp.com/emojis/723955735599251546"
+        },
+        fields: [
+          {
+            name: '\u200b',
+            value: '================================\n'
+            + "　　　　　　　　最終結果　　　　　　　　\n"
+            + '================================',
+            inline: false,
+          },
+          {
+            name:"------ 狼陣営 ------",
+            value: config.emoji['人狼'] + "かいかい\n\n" + config.emoji['狂人']+"タナカ",
+            inline: true
+          },
+          {
+            name: '\u200b',
+            value: '\u200b',
+            inline: true,
+          },
+          {
+            name:"------ 村人陣営 ------",
+            value: config.emoji['占い師'] + "おだがみ\n\n" 
+            + config.emoji['村人']+"お砂\n\n"
+            + config.emoji['騎士']+"のせ\n\n"
+            + config.emoji['霊能者']+"みく",
+            inline: true
+          },
+          {
+            name: '\u200b',
+            value: '================================\n'
+            + "　　　　　　　　ログ　　　　　　　　\n"
+            + '================================',
+            inline: false,
+          },
+          {
+            name: ":one:日目",
+            value: "----- 朝 -----\n"
+            + "処刑 => " + config.emoji['村人']+"お砂\n\n"
+            + "----- 夜 -----\n"
+            + "占い => " + config.emoji['騎士']+"のせ\n"
+            + "ガード => " + config.emoji['占い師']+"おだがみ\n"
+            + "殺害 => " + config.emoji['騎士']+"のせ\n\n"
+            + "================="
+          },
+          {
+            name:"------ 狼陣営 ------",
+            value: config.emoji['人狼'] + "かいかい\n\n" + config.emoji['狂人']+"タナカ",
+            inline: true
+          },
+          {
+            name: '\u200b',
+            value: '\u200b',
+            inline: true,
+          },
+          {
+            name:"------ 村人陣営 ------",
+            value: config.emoji['占い師'] + "おだがみ\n\n" 
+            + config.emoji['村人']+"`お砂 was hangged.`\n\n" 
+            + config.emoji['騎士']+"`のせ was dead.`\n\n"
+            + config.emoji['霊能者']+"みく",
+            inline: true
+          }
+        ]
+      }})
+    }

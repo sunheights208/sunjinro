@@ -75,17 +75,6 @@ const situation = (allPlayerInfo) => {
 
 const sleep = sec => new Promise(resolve => setTimeout(resolve, sec * 1000));
 
-const turnManagement = async(client,allPlayerInfo,config,turnRole) => {
-  await sleep(10);
-  // let gmData = await fs.readFile(config.gm_file, 'utf-8');
-  // let gmInfo = JSON.parse(gmData);
-  // if(turnRole == '占い師'){
-  //   gmInfo.fortune = 3;
-  //   gmInfo.knight = 0;
-  //   await sendTurnMessage(client,allPlayerInfo,config,"人狼");
-  // }
-}
-
 const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
 
   await sleep(3);
@@ -103,7 +92,7 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
     client.channels.cache.get(config.main_ch).send(toker + "さん。発言してください。");
     client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
 
-    let talkTimer = 10;
+    let talkTimer = 60;
     let talkCounter = 0;
     let gmData;
     let innerGmInfo;
@@ -147,7 +136,7 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
   client.channels.cache.get(config.main_ch).send("それでは次の"+tokerList.length + "名の方に発言を許可します。\n[ " + tokerList + "]");
 
   // 議論タイム
-  let talkTimer = 20;
+  let talkTimer = 60;
   let talkCounter = 0;
   let gmData;
   let innerGmInfo;

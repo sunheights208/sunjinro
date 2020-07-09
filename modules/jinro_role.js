@@ -244,8 +244,8 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     }
 
     // 執行人選出
-    // const executor = shuffle(config.join_player).find(player =>hangmans.indexOf(player) == -1);
-    const executor = 'おだがみ'
+    const executor = shuffle(config.join_player).find(player =>hangmans.indexOf(player) == -1);
+    // const executor = 'おだがみ'
     gmInfo.executor = executor;
     let executorMessage = "執行人は" + executor + "さんです。\n"
 

@@ -79,8 +79,8 @@ let allPlayerInfo = JSON.parse(playerData);
     await morning(client, message, config, allPlayerInfo, gmInfo);
 
     // 初日だけ2回回す（パラメータでやればいいのでは？）
-    // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
-    // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
+    await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
+    await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }

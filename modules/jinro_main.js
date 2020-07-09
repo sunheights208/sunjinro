@@ -105,8 +105,8 @@ const jinroInit = async(client,message,configFile) =>{
 
 const start = async(client, config, allPlayerInfo, gmInfo) => {
     let roleRaw = config.role_raw;
-    // let roleArray = shuffle(roleRaw);
-    let roleArray = roleRaw.concat()
+    let roleArray = shuffle(roleRaw);
+    // let roleArray = roleRaw.concat()
     let wolfsCannel = [
       {
         id: client.guilds.cache.get('221219415650205697').id,
@@ -254,7 +254,7 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
     );
   })
 
-  let evenigTimer = 20;
+  let evenigTimer = 60;
   let counter = 0;
   while(true){
     gmData = await fs.readFile(config.gm_file, 'utf-8');
@@ -289,7 +289,7 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
     gmInfo.bite = true;
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
-    let nightTimer = 20;
+    let nightTimer = 60;
     let nightCounter = 0;
     let gmData;
     let innerGmInfo;

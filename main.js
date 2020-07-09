@@ -8,7 +8,6 @@ module.exports = {
   serchRolePlayer,
   situation,
   sleep,
-  turnManagement,
   facilitator,
   breakUp,
   gather,

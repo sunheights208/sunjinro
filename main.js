@@ -84,15 +84,16 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
   
-  if(message.content.startsWith('決選投票')) {
+  if(message.content.startsWith('決戦投票')) {
     if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
     if(gmInfo.executor != commander) {
       message.reply( '執行人しか実施できないよ' );
-      return;
+      message.reply( 'デバッグのため許可' );
+      // return;
     }
 
-    let finalMessage = "決選投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
+    let finalMessage = "決戦投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
     client.channels.cache.get(config.main_ch).send(finalMessage);
     // 執行人と話してるので無くてOK
     // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.final_vote_plaer);
@@ -111,6 +112,17 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
   
+  if(message.content.startsWith('デバッグ')) {
+    const foo = await fs.readFile(config.gm_file, 'utf-8');
+    const hoge = foo.replace(/,/g, "\n")
+    message.reply( hoge );
+
+    // const foo1 = await fs.readFile(config.db_file, 'utf-8');
+    // const hoge2 = foo1.replace(/,/g, "\n")
+    // message.reply( hoge2 );
+    return;
+  }
+  
   if(message.content.startsWith('終了')) {
     if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     if(!gmInfo.talkNow) {
@@ -122,11 +134,14 @@ let allPlayerInfo = JSON.parse(playerData);
       message.reply( '今は使えないよ！' );
       return;
     }
-    
+   
+    // TODO
     if(gmInfo.nowTalker != message.author.username) {
-      message.reply( '発言者しか実行できないよ！' );
-      return;
+      // message.reply( '発言者しか実行できないよ！' );
+      message.reply( 'デバッグのため許可' );
+      // return;
     }
+
     gmInfo.talkNow = false;
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
     return;
@@ -135,6 +150,8 @@ let allPlayerInfo = JSON.parse(playerData);
   if(message.content.startsWith('吊る')) {
     if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
+
+    // TODO
     if(gmInfo.executor != commander && !message.author.bot) {
       message.reply( '執行人しか実施できないよ' );
       return;

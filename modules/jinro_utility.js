@@ -92,7 +92,7 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
     client.channels.cache.get(config.main_ch).send(toker + "さん。発言してください。");
     client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
 
-    let talkTimer = 60;
+    let talkTimer = 10;
     let talkCounter = 0;
     let gmData;
     let innerGmInfo;

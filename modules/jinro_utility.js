@@ -117,9 +117,11 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
     }
   });
 
-  innerGmInfo.talkNow = false;
-  innerGmInfo.nowTalker = "";
-  await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
+  // 最新版にする
+  gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
+  gmInfo.talkNow = false;
+  gmInfo.nowTalker = "";
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
 const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
@@ -161,8 +163,11 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
       if(user.displayName == toker) user.voice.setMute(true);
     });
   }
-  innerGmInfo.talkNow = false;
-  await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
+  
+  // 最新版にする
+  gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
+  gmInfo.talkNow = false;
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
 const breakUp = (client, allPlayerInfo) => {

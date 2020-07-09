@@ -117,9 +117,9 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
     }
   });
 
-  gmInfo.talkNow = false;
-  gmInfo.nowTalker = "";
-  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  innerGmInfo.talkNow = false;
+  innerGmInfo.nowTalker = "";
+  await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
 }
 
 const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
@@ -147,8 +147,8 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
       break;
 
     } else if (talkCounter == 3 && gmInfo.hangman != ""){
-      gmInfo.hang=true;
-      await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+      innerGmInfo.hang=true;
+      await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
     } else if (!innerGmInfo.talkNow){
       break;
     }
@@ -161,7 +161,7 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
       if(user.displayName == toker) user.voice.setMute(true);
     });
   }
-  gmInfo.talkNow = false;
+  innerGmInfo.talkNow = false;
   await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
 }
 

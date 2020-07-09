@@ -188,6 +188,7 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
 }
 
 const morning = async(client, message, config, allPlayerInfo, gmInfo) => {
+    gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
     gather(client, allPlayerInfo);
     let display = "【朝が来ました】\n";
     let joinPlayer = config.join_player;
@@ -226,6 +227,7 @@ const morning = async(client, message, config, allPlayerInfo, gmInfo) => {
 }
 
 const twilight = async(client, config, allPlayerInfo, gmInfo) => {
+  gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   breakUp(client,allPlayerInfo);
   // fs.existsSync('/etc/passwd')
   let eveningRoles = ['占い師','騎士']
@@ -275,6 +277,7 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
 }
 
 const night = async(client, config, allPlayerInfo, gmInfo) => {
+    gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
     // 夜系コマンドの初期化
     let display = "【夜になりました】\n"
     + "人狼は1分以内に行動を終わらせてね！"
@@ -312,6 +315,7 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
 }
 
 const voteTime = async(client,config,gmInfo,allPlayerInfo) => {
+  gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
 
   let votePlayer = [];
 

@@ -76,6 +76,7 @@ const situation = (allPlayerInfo) => {
 const sleep = sec => new Promise(resolve => setTimeout(resolve, sec * 1000));
 
 const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
+  gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
 
   await sleep(3);
   for(let toker of tokerList) {
@@ -126,6 +127,7 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
 }
 
 const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
+  gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   gmInfo.talkNow = true;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 

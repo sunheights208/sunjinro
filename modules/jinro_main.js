@@ -1,5 +1,6 @@
 const fs = require('fs/promises');
 const { sleep } = require('./jinro_utility');
+const { forEach } = require('async');
 
 const jinroInit = async(client,message,configFile) =>{
     let configData = await fs.readFile(configFile, 'utf-8');
@@ -304,6 +305,10 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
       await sleep(1);
       ++nightCounter;
     }
+    // 狼のミュート
+    client.channels.cache.get('726173962446438502').members.forEach(user => {
+      user.voice.setMute(true);
+    });
 }
 
 const voteTime = async(client,config,gmInfo,allPlayerInfo) => {

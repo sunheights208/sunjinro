@@ -34,8 +34,9 @@ const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
     return;
   }
 
-  if(gmInfo.talkNow && !gmInfo.hangman){
-    message.reply( '会話中はコマンドが打てないよ！' );
+  if(gmInfo.talkNow && !gmInfo.hangman &&
+    !message.content.startsWith('終了')){
+    message.reply( 'この会話中はコマンドが打てないよ！' );
     return false
   }
 
@@ -86,11 +87,12 @@ const turnManagement = async(client,allPlayerInfo,config,turnRole) => {
 }
 
 const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
-  gmInfo.talkNow = true;
-  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
   await sleep(3);
   for(let toker of tokerList) {
+    gmInfo.talkNow = true;
+    gmInfo.nowTalker = toker;
+    await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
     client.channels.cache.get('726305512529854504').members.forEach(user => {
       if(user.displayName == toker){
         user.voice.setMute(false);
@@ -100,17 +102,34 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
     });
     client.channels.cache.get(config.main_ch).send(toker + "さん。発言してください。");
     client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
-    await sleep(5);
+
+    let talkTimer = 10;
+    let talkCounter = 0;
+    let gmData;
+    let innerGmInfo;
+    while(true){
+      gmData = await fs.readFile(config.gm_file, 'utf-8');
+      innerGmInfo = JSON.parse(gmData);
+      if(talkCounter == talkTimer) {
+        break;
+
+      } else if (!innerGmInfo.talkNow){
+        break;
+      }
+      await sleep(1);
+      ++talkCounter;
+    }
   }
 
   // 最後に全員黙らせる
   client.channels.cache.get('726305512529854504').members.forEach(user => {
-    if(user.displayName == toker){
+    if(tokerList.indexOf(user.displayName) !== -1){
       user.voice.setMute(true);
     }
   });
 
   gmInfo.talkNow = false;
+  gmInfo.nowTalker = "";
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
@@ -128,7 +147,25 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
   client.channels.cache.get(config.main_ch).send("それでは次の"+tokerList.length + "名の方に発言を許可します。\n[ " + tokerList + "]");
 
   // 議論タイム
-  await sleep(10);
+  let talkTimer = 20;
+  let talkCounter = 0;
+  let gmData;
+  let innerGmInfo;
+  while(true){
+    gmData = await fs.readFile(config.gm_file, 'utf-8');
+    innerGmInfo = JSON.parse(gmData);
+    if(talkCounter == talkTimer) {
+      break;
+
+    } else if (talkCounter == 3 && gmInfo.hangman != ""){
+      gmInfo.hang=true;
+      await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+    } else if (!innerGmInfo.talkNow){
+      break;
+    }
+    await sleep(1);
+    ++talkCounter;
+  }
 
   for(let toker of tokerList) {
     client.channels.cache.get('726305512529854504').members.forEach(user => {
@@ -136,7 +173,7 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
     });
   }
   gmInfo.talkNow = false;
-  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
 }
 
 const breakUp = (client, allPlayerInfo) => {
@@ -150,6 +187,11 @@ const breakUp = (client, allPlayerInfo) => {
         }
       })
     }
+
+    // 狼は発言許可
+    client.channels.cache.get('726173962446438502').members.forEach(user => {
+      user.voice.setMute(false);
+    });
   });
 }
 
@@ -187,9 +229,46 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
   await sleep(3);
 
   // 結果作成
+  const resultFilePath = "./public/data/result.json";
+  const resultFile = JSON.parse(await fs.readFile(resultFilePath, 'utf-8'));
   let resultDark = "";
   let resultWhite = "";
   for(let key in allPlayerInfo){
+    if(!resultFile[key]) resultFile[key] = {
+      total_games:0,
+      win:0,
+      lose:0,
+      人狼:{
+        total_games:0,
+        win:0,
+        lose:0
+      },
+      狂人:{
+        total_games:0,
+        win:0,
+        lose:0
+      },
+      村人:{
+        total_games:0,
+        win:0,
+        lose:0
+      },
+      占い師:{
+        total_games:0,
+        win:0,
+        lose:0
+      },
+      騎士:{
+        total_games:0,
+        win:0,
+        lose:0
+      },
+      霊能者:{
+        total_games:0,
+        win:0,
+        lose:0
+      }
+    }
     const role = allPlayerInfo[key].role;
     const alive = allPlayerInfo[key].alive;
     if(role == '人狼' || role == '狂人') {
@@ -198,6 +277,10 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
       } else {
         resultDark += config.emoji[role] + key + "\n\n"
       }
+      ++resultFile[key].total_games;
+      ++resultFile[key][role].total_games;
+      (winSide == 'dark') ? ++resultFile[key].win : ++resultFile[key].lose;
+      (winSide == 'dark') ? ++resultFile[key][role].win : ++resultFile[key][role].lose;
     }
     if(role != '人狼' && role != '狂人') {
       if(!alive) {
@@ -205,8 +288,13 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
       } else {
         resultWhite += config.emoji[role] + key + "\n\n"
       }
+      ++resultFile[key].total_games;
+      ++resultFile[key][role].total_games;
+      (winSide == 'white') ? ++resultFile[key].win : ++resultFile[key].lose
+      (winSide == 'white') ? ++resultFile[key][role].win : ++resultFile[key][role].lose
     }
   }
+  await fs.writeFile(resultFilePath, JSON.stringify(resultFile));
   
  const result = {embed: {
     author: {

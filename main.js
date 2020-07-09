@@ -51,6 +51,7 @@ client.on('ready', message => {
 client.on('message', message => {
   (async () => {
 
+  // console.log(message)
 
 let configData = await fs.readFile(configFile, 'utf-8');
 let config = JSON.parse(configData);
@@ -61,7 +62,8 @@ let allPlayerInfo = JSON.parse(playerData);
 
   //人狼カテゴリチャンネルの発言以外は弾く
   if (message.channel.parentID != '722131778403303577') return;
-  
+
+  // match(/hoge/)
   if(message.content.startsWith('初期化')) {
     await jinroInit(client,message,configFile);
     return;
@@ -109,8 +111,25 @@ let allPlayerInfo = JSON.parse(playerData);
     await bite(config,gmInfo,message,allPlayerInfo,timerFile);
     return;
   }
-  if(message.content.startsWith('チェック')) {
-    await resultCheck(client, config, message, allPlayerInfo);
+  
+  if(message.content.startsWith('終了')) {
+    if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
+    if(!gmInfo.talkNow) {
+      message.reply( '発言中しか実行できないよ！' );
+      return;
+    }
+    
+    if(gmInfo.nowTalker == "") {
+      message.reply( '今は使えないよ！' );
+      return;
+    }
+    
+    if(gmInfo.nowTalker != message.author.username) {
+      message.reply( '発言者しか実行できないよ！' );
+      return;
+    }
+    gmInfo.talkNow = false;
+    await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
     return;
   }
 
@@ -128,36 +147,31 @@ let allPlayerInfo = JSON.parse(playerData);
       return;
     }
 
-    const hang = message.content.split(' ')[1];
-    if(!hang) {
-		  message.reply( '対象を入れてね！' );
-      return 
+    if(gmInfo.hangman != "" && !gmInfo.hang) {
+      message.reply( 'まだ吊れないよ！' );
+      return;
     }
-    
-    const playerInfo = allPlayerInfo[hang];
-    if(!playerInfo || !playerInfo.alive) {
-		  message.reply( 'この世に存在する相手を選んでね！' );
+
+    const hang = message.content.split(' ')[1];
+    // 決戦前に対応させる
+    if(gmInfo.hangman == "" && !gmInfo.final_vote_plaer.includes(hang)) {
+		  message.reply( '候補者から選んでね！ => ' + gmInfo.final_vote_plaer);
       return 
     }
 
-    if(hang != gmInfo.hangman) {
-		  message.reply( 'あれ？吊る人が違うよ？' );
-      return 
-    }
+    const playerInfo = gmInfo.hangman != "" ? allPlayerInfo[gmInfo.hangman]:allPlayerInfo[hang];
+    const hangmanName = gmInfo.hangman != "" ? gmInfo.hangman:hang;
 
     playerInfo.alive = false;
-    fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo), function (err) {
-      if (err) return console.log(err);
-      else console.log('hangged!');
-    });
+    await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
 
-    message.reply( hang + 'さんを吊りました！\n====================\n' + situation(allPlayerInfo) );
+    message.reply( hangmanName + 'さんを吊りました！\n====================\n' + situation(allPlayerInfo) );
 
     gmInfo.hang_done=true;
     gmInfo.hang=false;
-    fs.writeFile(config.gm_file, JSON.stringify(gmInfo), function (err) {
-      if (err) return console.log(err);
-    });
+    gmInfo.hangman = hangmanName;
+    gmInfo.talkNow = false;
+    await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
     if(!await resultCheck(client, config, message, allPlayerInfo)) return; 
     client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
@@ -214,6 +228,56 @@ let allPlayerInfo = JSON.parse(playerData);
   
   if(message.content.startsWith('クリアメッセージ')) {
     message.channel.bulkDelete(100)
+    return;
+  }
+
+  if(message.content.startsWith('戦績')) {
+    const resultFilePath = "./public/data/result.json";
+    const resultFile = JSON.parse(await fs.readFile(resultFilePath, 'utf-8'));
+    let allResult = [];
+
+    for(let key in resultFile){
+      const result = resultFile[key]
+      const totalResult = (result.total_games != 0) ? Math.round(result.win / result.total_games * 100):0;
+      let playerResultStr = "勝率: " + totalResult + "％\n"
+      + "　総戦績: " + result.win + "勝" + result.lose + "敗" + "\n"
+
+      for(let key in result){
+        if(!["total_games","win","lose"].includes(key)){
+          const roleTotalResult = (result[key].total_games != 0) ? Math.round(result[key].win / result[key].total_games * 100):0 
+          playerResultStr += config.emoji[key] + ": " + result[key].win + "勝" + result[key].lose + "敗" + roleTotalResult + "％\n"
+        }
+      }
+      
+      allResult.push(
+        {
+          name: key,
+          value: playerResultStr,
+          inline: true
+        }
+      )
+    }
+    const result = {embed: {
+      author: {
+        name: "サンハイツ人狼",
+        url: "https://github.com/sunheights208/sunjinro",
+        icon_url: client.user.avatarURL()
+      },
+      title: "戦績",
+      description: "これまでの戦績",
+      color: config.result_color.result,
+      timestamp: new Date(),
+      footer: {
+        icon_url: client.user.avatarURL,
+        text: "©️ sunheighs jinro"
+      },
+      thumbnail: {
+        url: "https://cdn.discordapp.com/emojis/" + config.result_emoji.result
+      },
+      fields: allResult
+    }};
+  
+    message.channel.send(result);
     return;
   }
 

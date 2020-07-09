@@ -81,6 +81,11 @@ const protect = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
     return;
   }
 
+  if(protect == message.channel.name) {
+    message.reply( '自分は守れないよ！' );
+    return;
+  }
+
   if(!gmInfo.knight) {
     message.reply( '1回しか守れないよ！' );
     return;
@@ -239,8 +244,8 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     }
 
     // 執行人選出
-    const executor = shuffle(config.join_player).find(player =>hangmans.indexOf(player) == -1);
-    // const executor = 'おだがみ'
+    // const executor = shuffle(config.join_player).find(player =>hangmans.indexOf(player) == -1);
+    const executor = 'おだがみ'
     gmInfo.executor = executor;
     let executorMessage = "執行人は" + executor + "さんです。\n"
 
@@ -248,15 +253,19 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     if(hangmans.length == 1){
       headerMessage += "今晩処刑される人は" + hangmans[0] + "さんです。\n"
       executorMessage += "これより" + hangmans[0] + "さんと執行人には1分間の会話する権利を与えます。\n最期の時間、有意義にお使いくださいませ。"
-      gmInfo.hang=true;
       gmInfo.vote_time = false;
       gmInfo.hangman=hangmans[0];
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
       client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + executorMessage);
 
       await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo, [executor,hangmans[0]]);
-      client.channels.cache.get(config.main_ch).send("終了です。\n");
-      client.channels.cache.get(config.main_ch).send("吊る " + hangmans[0]);
+
+      const gmData = await fs.readFile(config.gm_file, 'utf-8');
+      gmInfo = JSON.parse(gmData);
+      if(gmInfo.hang){
+        client.channels.cache.get(config.main_ch).send("終了です。\n");
+        client.channels.cache.get(config.main_ch).send("吊る");
+      }
 
     } else if (gmInfo.final_vote_plaer.length > 0) {
       // 既に決選投票候補者がある = 決選投票コマンドからの投票になる。

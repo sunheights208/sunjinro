@@ -290,8 +290,8 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
       }
       ++resultFile[key].total_games;
       ++resultFile[key][role].total_games;
-      (winSide == 'white') ? ++resultFile[key].win : ++resultFile[key].lose
-      (winSide == 'white') ? ++resultFile[key][role].win : ++resultFile[key][role].lose
+      (winSide == 'white') ? ++resultFile[key].win : ++resultFile[key].lose;
+      (winSide == 'white') ? ++resultFile[key][role].win : ++resultFile[key][role].lose;
     }
   }
   await fs.writeFile(resultFilePath, JSON.stringify(resultFile));

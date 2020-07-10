@@ -13,6 +13,11 @@ const sendMessageToChannel = (id,message) => {
   }
 
 const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
+  if(!allPlayerInfo[message.author.username]){
+    message.reply( '参加者しかコマンドは許可していないよ！' );
+    return;
+  }
+
   if(message.author.bot && 
     !message.content.startsWith('吊る') && 
     !message.content.startsWith('===== 投票終了 =====')){ 

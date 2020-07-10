@@ -69,6 +69,10 @@ let allPlayerInfo = JSON.parse(playerData);
   }
   
   if(message.content.startsWith('開始')) {
+    if(!allPlayerInfo[message.author.username]){
+      message.reply( '参加者しかコマンドは許可していないよ！' );
+      return;
+    }
     if(message.channel.id != config.main_ch){
       message.reply('#village限定コマンド')
       return
@@ -326,9 +330,12 @@ let allPlayerInfo = JSON.parse(playerData);
 
 })().catch(
   (err) => {
-    console.log(err);
-    // writeFile(config.gmInfo,gmInfo);
-    // writeFile(config.db_file,allPlayerInfo);
+    const error = {
+      ERR:err,
+      mesg:message.content,
+      autor:message.author
+    }
+    console.log(error)
   }
 );
 });

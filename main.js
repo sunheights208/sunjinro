@@ -115,17 +115,6 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
   
-  if(message.content.startsWith('ファイル')) {
-    const foo = await fs.readFile(config.gm_file, 'utf-8');
-    const hoge = foo.replace(/,/g, "\n")
-    message.reply( hoge );
-
-    const foo1 = await fs.readFile(configFile, 'utf-8');
-    const hoge2 = foo1.replace(/,/g, "\n")
-    message.reply( hoge2 );
-    return;
-  }
-  
   if(message.content.startsWith('終了')) {
     if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     if(!gmInfo.talkNow) {
@@ -310,7 +299,19 @@ let allPlayerInfo = JSON.parse(playerData);
     let debugConfig1 = JSON.parse(await fs.readFile(configFile, 'utf-8'));
 
     debugConfig1.debug_mode = true;
-    await fs.writeFile(config.gm_file, JSON.stringify(debugConfig1));
+    await fs.writeFile(configFile, JSON.stringify(debugConfig1));
+    message.reply("ON")
+    return;
+  }
+  
+  if(message.content.startsWith('ファイル')) {
+    const foo = await fs.readFile(config.gm_file, 'utf-8');
+    const hoge = foo.replace(/,/g, "\n")
+    message.reply( hoge );
+
+    const foo1 = await fs.readFile(configFile, 'utf-8');
+    const hoge2 = foo1.replace(/,/g, "\n")
+    message.reply( hoge2 );
     return;
   }
 
@@ -318,7 +319,8 @@ let allPlayerInfo = JSON.parse(playerData);
     let debugConfig2 = JSON.parse(await fs.readFile(configFile, 'utf-8'));
 
     debugConfig2.writeFile = false;
-    await fs.writeFile(config.gm_file, JSON.stringify(debugConfig2));
+    await fs.writeFile(configFile, JSON.stringify(debugConfig2));
+    message.reply("OFF")
     return;
   }
 

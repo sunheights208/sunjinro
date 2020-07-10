@@ -16,8 +16,8 @@ const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
   if(message.author.bot && 
     !message.content.startsWith('吊る') && 
     !message.content.startsWith('===== 投票終了 =====')){ 
-      console.log("authr err")
-      return false;}
+      return false;
+    }
 
   if(config.join_player.length == 0){
     client.channels.cache.get(config.main_ch).send("初期化してね！");
@@ -75,8 +75,10 @@ const situation = (allPlayerInfo) => {
 
 const sleep = sec => new Promise(resolve => setTimeout(resolve, sec * 1000));
 
-const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
-  gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
+const facilitator = async(client, config) => {
+  let gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
+  let allPlayerInfo = JSON.parse(await fs.readFile(config.db_file, 'utf-8'));
+  let tokerList = gmInfo.toker;
 
   await sleep(3);
   for(let toker of tokerList) {
@@ -105,6 +107,10 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
 
       } else if (!innerGmInfo.talkNow){
         break;
+      } else if (talkTimer - talkCounter == 30){
+        client.channels.cache.get(config.main_ch).send("　あと30秒");
+      } else if (talkTimer - talkCounter == 10){
+        client.channels.cache.get(config.main_ch).send("　あと10秒");
       }
       await sleep(1);
       ++talkCounter;
@@ -149,12 +155,15 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
     innerGmInfo = JSON.parse(gmData);
     if(talkCounter == talkTimer) {
       break;
-
-    } else if (talkCounter == 3 && gmInfo.hangman != ""){
+    } else if (talkCounter == 9 && gmInfo.hangman != ""){
       innerGmInfo.hang=true;
       await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
     } else if (!innerGmInfo.talkNow){
       break;
+    } else if (talkTimer - talkCounter == 30){
+    client.channels.cache.get(config.main_ch).send("　あと30秒");
+    } else if (talkTimer - talkCounter == 10){
+      client.channels.cache.get(config.main_ch).send("　あと10秒");
     }
     await sleep(1);
     ++talkCounter;

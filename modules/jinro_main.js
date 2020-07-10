@@ -251,12 +251,18 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
       console.log('例外発生')
       return;
     }
-    client.channels.cache.get(serchRolePlayer(allPlayerInfo,role)[0].channel_id).send(
-      "1分以内に「" + command + " 〇〇」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
-    );
+
+    const players = serchRolePlayer(allPlayerInfo,role);
+    for(key in players){
+      if(players[key].alive) {
+        client.channels.cache.get(players[key].channel_id).send(
+            "1分以内に「" + command + " 〇〇」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
+        );
+      }
+    }
   })
 
-  let evenigTimer = 60;
+  let evenigTimer = config.timer;
   let counter = 0;
   while(true){
     gmData = await fs.readFile(config.gm_file, 'utf-8');
@@ -292,7 +298,7 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
     gmInfo.bite = true;
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
-    let nightTimer = 60;
+    let nightTimer = config.timer;
     let nightCounter = 0;
     let gmData;
     let innerGmInfo;

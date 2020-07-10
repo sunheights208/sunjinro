@@ -78,22 +78,22 @@ let allPlayerInfo = JSON.parse(playerData);
     await morning(client, message, config, allPlayerInfo, gmInfo);
 
     // 初日だけ2回回す（パラメータでやればいいのでは？）
-    await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
-    await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
+    await facilitator(client, config);
+    await facilitator(client, config);
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
   
-  if(message.content.startsWith('決戦投票')) {
+  if(message.content.startsWith('決選投票')) {
     if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
     if(gmInfo.executor != commander) {
       message.reply( '執行人しか実施できないよ' );
-      message.reply( 'デバッグのため許可' );
-      // return;
+      // message.reply( 'デバッグのため許可' );
+      return;
     }
 
-    let finalMessage = "決戦投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
+    let finalMessage = "決選投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
     client.channels.cache.get(config.main_ch).send(finalMessage);
     // 執行人と話してるので無くてOK
     // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.final_vote_plaer);
@@ -135,11 +135,10 @@ let allPlayerInfo = JSON.parse(playerData);
       return;
     }
    
-    // TODO
     if(gmInfo.nowTalker != message.author.username) {
-      // message.reply( '発言者しか実行できないよ！' );
-      message.reply( 'デバッグのため許可' );
-      // return;
+      message.reply( '発言者しか実行できないよ！' );
+      // message.reply( 'デバッグのため許可' );
+      return;
     }
 
     gmInfo.talkNow = false;
@@ -237,7 +236,7 @@ let allPlayerInfo = JSON.parse(playerData);
     // 朝の時間
     if(!await resultCheck(client, config, message, allPlayerInfo)) return false;
     await morning(client, message, config, allPlayerInfo, gmInfo);
-    await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.toker);
+    await facilitator(client, config);
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }

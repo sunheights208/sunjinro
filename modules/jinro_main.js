@@ -100,6 +100,7 @@ const jinroInit = async(client,message,configFile) =>{
       }
 
       await fs.writeFile(config.gm_file, JSON.stringify(initGMFile));
+      message.reply("初期化完了")
     }
 }
 

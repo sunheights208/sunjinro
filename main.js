@@ -115,7 +115,7 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
   
-  if(message.content.startsWith('デバッグ')) {
+  if(message.content.startsWith('ファイル')) {
     const foo = await fs.readFile(config.gm_file, 'utf-8');
     const hoge = foo.replace(/,/g, "\n")
     message.reply( hoge );

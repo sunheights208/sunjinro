@@ -256,7 +256,7 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       gmInfo.vote_time = false;
       gmInfo.hangman=hangmans[0];
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
-      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================n" + executorMessage);
+      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================\n" + executorMessage);
 
       await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo, [executor,hangmans[0]]);
 

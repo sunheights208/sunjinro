@@ -256,7 +256,7 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       gmInfo.vote_time = false;
       gmInfo.hangman=hangmans[0];
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
-      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + executorMessage);
+      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n================\n" + executorMessage);
 
       await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo, [executor,hangmans[0]]);
 
@@ -276,9 +276,9 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     } else {
       headerMessage += "次の" + hangmans.length + "人が候補となりました。=> " + hangmans + "\n"
       gmInfo.final_vote_plaer = hangmans;
-      executorMessage = "これより執行候補者と執行人で話し合いを行っていただきます。\n"
+      executorMessage += "これより執行候補者と執行人で話し合いを行っていただきます。\n"
       + "制限時間は1分。発言順の制御は行いませんので、自由に議論を行ってください。"
-      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + executorMessage);
+      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n================\n" + executorMessage);
       
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 

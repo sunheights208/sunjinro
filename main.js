@@ -89,8 +89,11 @@ let allPlayerInfo = JSON.parse(playerData);
     let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
     if(gmInfo.executor != commander) {
       message.reply( '執行人しか実施できないよ' );
-      // message.reply( 'デバッグのため許可' );
-      return;
+      if(config.debug_mode){
+        message.reply( 'デバッグのため許可' );
+      } else {
+        return;
+      }
     }
 
     let finalMessage = "決選投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
@@ -137,8 +140,11 @@ let allPlayerInfo = JSON.parse(playerData);
    
     if(gmInfo.nowTalker != message.author.username) {
       message.reply( '発言者しか実行できないよ！' );
-      // message.reply( 'デバッグのため許可' );
-      return;
+      if(config.debug_mode){
+        message.reply( 'デバッグのため許可' );
+      } else {
+        return;
+      }
     }
 
     gmInfo.talkNow = false;
@@ -153,7 +159,11 @@ let allPlayerInfo = JSON.parse(playerData);
     // TODO
     if(gmInfo.executor != commander && !message.author.bot) {
       message.reply( '執行人しか実施できないよ' );
-      return;
+      if(config.debug_mode){
+        message.reply( 'デバッグのため許可' );
+      } else {
+        return;
+      }
     }
 
     // 吊った後の抑制
@@ -293,6 +303,22 @@ let allPlayerInfo = JSON.parse(playerData);
     }};
   
     message.channel.send(result);
+    return;
+  }
+
+  if(message.content.startsWith('デバッグモードON')) {
+    let debugConfig1 = JSON.parse(await fs.readFile(configFile, 'utf-8'));
+
+    debugConfig1.debug_mode = true;
+    await fs.writeFile(config.gm_file, JSON.stringify(debugConfig1));
+    return;
+  }
+
+  if(message.content.startsWith('デバッグモードOFF')) {
+    let debugConfig2 = JSON.parse(await fs.readFile(configFile, 'utf-8'));
+
+    debugConfig2.writeFile = false;
+    await fs.writeFile(config.gm_file, JSON.stringify(debugConfig2));
     return;
   }
 

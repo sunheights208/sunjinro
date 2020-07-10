@@ -117,9 +117,9 @@ let allPlayerInfo = JSON.parse(playerData);
     const hoge = foo.replace(/,/g, "\n")
     message.reply( hoge );
 
-    // const foo1 = await fs.readFile(config.db_file, 'utf-8');
-    // const hoge2 = foo1.replace(/,/g, "\n")
-    // message.reply( hoge2 );
+    const foo1 = await fs.readFile(configFile, 'utf-8');
+    const hoge2 = foo1.replace(/,/g, "\n")
+    message.reply( hoge2 );
     return;
   }
   

@@ -13,8 +13,10 @@ const sendMessageToChannel = (id,message) => {
   }
 
 const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
-  if(!serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){
+  if(!message.author.bot &&
+    !serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){    
     message.reply( '参加者しかコマンドは許可していないよ！' );
+    console.log("参加者以外:"+message.content)
     return;
   }
 

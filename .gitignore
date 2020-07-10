@@ -1,5 +1,4 @@
 node_modules/*
 .env
 unjinro.code-workspace
-.gm.json
 public/*

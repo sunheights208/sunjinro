@@ -249,14 +249,14 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     gmInfo.executor = executor;
     let executorMessage = "執行人は" + executor + "さんです。\n"
 
-    let headerMessage = "投票結果です。\n================\n"
+    let headerMessage = "================ 投票結果です。================\n"
     if(hangmans.length == 1){
       headerMessage += "今晩処刑される人は" + hangmans[0] + "さんです。\n"
       executorMessage += "これより" + hangmans[0] + "さんと執行人には1分間の会話する権利を与えます。\n最期の時間、有意義にお使いくださいませ。"
       gmInfo.vote_time = false;
       gmInfo.hangman=hangmans[0];
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
-      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n================\n" + executorMessage);
+      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================n" + executorMessage);
 
       await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo, [executor,hangmans[0]]);
 

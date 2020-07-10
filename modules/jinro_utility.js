@@ -122,7 +122,6 @@ const facilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
   gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   gmInfo.talkNow = false;
   gmInfo.nowTalker = "";
-  console.log(gmInfo)
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 
@@ -170,7 +169,6 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
   // 最新版にする
   gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   gmInfo.talkNow = false;
-  console.log(gmInfo)
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 }
 

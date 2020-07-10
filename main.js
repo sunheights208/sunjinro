@@ -69,7 +69,7 @@ let allPlayerInfo = JSON.parse(playerData);
   }
   
   if(message.content.startsWith('開始')) {
-    if(!allPlayerInfo[message.author.username]){
+    if(!serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){
       message.reply( '参加者しかコマンドは許可していないよ！' );
       return;
     }
@@ -131,7 +131,7 @@ let allPlayerInfo = JSON.parse(playerData);
       return;
     }
    
-    if(gmInfo.nowTalker != message.author.username) {
+    if(gmInfo.nowTalker != serchPlayerNameFromMsg(allPlayerInfo,message.author.id)) {
       message.reply( '発言者しか実行できないよ！' );
       if(config.debug_mode){
         message.reply( 'デバッグのため許可' );

@@ -13,7 +13,7 @@ const sendMessageToChannel = (id,message) => {
   }
 
 const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
-  if(!allPlayerInfo[message.author.username]){
+  if(!serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){
     message.reply( '参加者しかコマンドは許可していないよ！' );
     return;
   }
@@ -34,7 +34,7 @@ const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
     return false
   }
 
-  if(!message.author.bot && !allPlayerInfo[message.author.username].alive){
+  if(!message.author.bot && !allPlayerInfo[serchPlayerNameFromMsg(allPlayerInfo,message.author.id)].alive){
     message.reply( '君！死んでるよ！' );
     return;
   }
@@ -188,11 +188,11 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
 
 const breakUp = (client, allPlayerInfo) => {
   client.channels.cache.get('726305512529854504').members.forEach(member => {
-    if(allPlayerInfo[member.user.username].role == '人狼'){
+    if(allPlayerInfo[serchPlayerNameFromMsg(allPlayerInfo,message.author.id)].role == '人狼'){
         member.voice.setChannel(client.channels.cache.get('726173962446438502'))
     } else {
       client.channels.cache.forEach(channel => {
-        if(channel.type == 'voice' && channel.name == member.user.username){
+        if(channel.type == 'voice' && channel.name == serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){
           member.voice.setChannel(channel)
         }
       })

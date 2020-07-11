@@ -170,7 +170,7 @@ let allPlayerInfo = JSON.parse(playerData);
       return;
     }
 
-    const hang = message.content.split(' ')[1];
+    const hang = message.content.replace(/　/gi, ' ').split(' ')[1];
     // 決戦前に対応させる
     if(gmInfo.hangman == "" && !gmInfo.final_vote_plaer.includes(hang)) {
 		  message.reply( '候補者から選んでね！ => ' + gmInfo.final_vote_plaer);

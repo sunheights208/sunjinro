@@ -10,7 +10,7 @@ const jinroInit = async(client,message,configFile) =>{
     let playerInfoArrayStart = {};
     
     // playerをconfigに設定
-    const initCommandArray = message.content.split(' ');
+    const initCommandArray = message.content.replace(/　/gi, ' ').split(' ');
     if(initCommandArray[1] && initCommandArray[2]){
       const inputMemberArray = initCommandArray[1].split(',');
       const inputRoleArray = initCommandArray[2].split(',');

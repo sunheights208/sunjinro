@@ -19,7 +19,7 @@ const fortune = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
     return 
   }
 
-  const fortune = message.content.split(' ')[1];
+  const fortune = message.content.replace(/　/gi, ' ').split(' ')[1];
 
   if(!gmInfo.fortune) {
     message.reply( '1回しか占えないよ！' );
@@ -69,7 +69,7 @@ const protect = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
     return;
   }
 
-  const protect = message.content.split(' ')[1];
+  const protect = message.content.replace(/　/gi, ' ').split(' ')[1];
   if(!protect) {
     message.reply( '守る人を入れてね！' );
     return 
@@ -131,7 +131,7 @@ const bite = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   //   return 
   // }
 
-  const killed = message.content.split(' ')[1];
+  const killed = message.content.replace(/　/gi, ' ').split(' ')[1];
   if(!killed) {
     message.reply( '噛む人を入れてね！' );
     return 
@@ -184,7 +184,7 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     return;
   }
 
-  const vote = message.content.split(' ')[1];
+  const vote = message.content.replace(/　/gi, ' ').split(' ')[1];
   if(!vote) {
     message.reply( '投票する人を選んでね！' );
     return; 
@@ -245,7 +245,6 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
 
     // 執行人選出
     const executor = shuffle(config.join_player).find(player =>hangmans.indexOf(player) == -1 && allPlayerInfo[player].alive);
-    // const executor = 'おだがみ'
     gmInfo.executor = executor;
     let executorMessage = "執行人は" + executor + "さんです。\n"
 
@@ -276,16 +275,18 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     } else {
       headerMessage += "次の" + hangmans.length + "人が候補となりました。=> " + hangmans + "\n"
       gmInfo.final_vote_plaer = hangmans;
-      executorMessage += "これより執行候補者と執行人で話し合いを行っていただきます。\n"
-      + "制限時間は1分。発言順の制御は行いませんので、自由に議論を行ってください。"
-      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n================\n" + executorMessage);
-      
-      await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+      if(executor){
+        executorMessage += "これより執行候補者と執行人で話し合いを行っていただきます。\n"
+        + "制限時間は1分。発言順の制御は行いませんので、自由に議論を行ってください。"
+        client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n================\n" + executorMessage);
+        
+        await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
-      let finalToker = hangmans.concat();
-      finalToker.push(executor)
-      await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo,finalToker);
-      client.channels.cache.get(config.main_ch).send("終了です。\n執行人の方は「吊る [名前]」か「決選投票」のコマンドを実行してください。\n");
+        let finalToker = hangmans.concat();
+        finalToker.push(executor)
+        await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo,finalToker);
+        client.channels.cache.get(config.main_ch).send("終了です。\n執行人の方は「吊る [名前]」か「決選投票」のコマンドを実行してください。\n");
+      }
     }
   }
 }

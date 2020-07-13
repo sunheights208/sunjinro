@@ -100,6 +100,27 @@ const jinroInit = async(client,message,configFile) =>{
       }
 
       await fs.writeFile(config.gm_file, JSON.stringify(initGMFile));
+    } else {
+      // チャンネルの初期化
+      const dontDeleteID =[
+        "723613401913491566",
+        "726173962446438502",
+        "726305512529854504",
+        "726412669090922516",
+        "727184617152577536"
+      ]
+      client.channels.cache.forEach(channel => {
+        if (channel.parentID == '722131778403303577' && 
+        !dontDeleteID.includes(channel.id)) {
+          channel.delete()
+        };
+      });
+
+      //configの初期化
+      config.join_player = [];
+      
+      // configファイルの初期化
+      await fs.writeFile(configFile, JSON.stringify(config));
     }
 }
 

@@ -73,6 +73,10 @@ let allPlayerInfo = JSON.parse(playerData);
   }
   
   if(message.content.startsWith('開始')) {
+    if(config.join_player.length == 0){
+      client.channels.cache.get(config.main_ch).send("初期化してね！");
+      return false
+    }
     if(config.gm_file.game_master_id && message.author.id != config.gm_file.game_master_id){
       message.reply( 'GMしかコマンドは許可していないよ！' );
       return;

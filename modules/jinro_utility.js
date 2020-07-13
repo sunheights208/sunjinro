@@ -13,6 +13,17 @@ const sendMessageToChannel = (id,message) => {
   }
 
 const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
+
+  if(config.join_player.length == 0){
+    client.channels.cache.get(config.main_ch).send("初期化してね！");
+    return false
+  }
+
+  if(!gmInfo.start){
+    message.reply( '開始してね！' );
+    return false
+  }
+  
   if(!message.author.bot &&
     !serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){    
     message.reply( '参加者しかコマンドは許可していないよ！' );
@@ -25,16 +36,6 @@ const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
     !message.content.startsWith('===== 投票終了 =====')){ 
       return false;
     }
-
-  if(config.join_player.length == 0){
-    client.channels.cache.get(config.main_ch).send("初期化してね！");
-    return false
-  }
-
-  if(!gmInfo.start){
-    message.reply( '開始してね！' );
-    return false
-  }
 
   if(!message.author.bot && !allPlayerInfo[serchPlayerNameFromMsg(allPlayerInfo,message.author.id)].alive){
     message.reply( '君！死んでるよ！' );

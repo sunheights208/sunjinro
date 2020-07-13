@@ -1,5 +1,9 @@
 const fs = require('fs/promises');
 
+const {
+  voteTime
+} = require('./modules/jinro_main.js');
+
 const fortune = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
   if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
 

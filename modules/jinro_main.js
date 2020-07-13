@@ -120,8 +120,6 @@ const jinroInit = async(client,message,configFile) =>{
 
       //configの初期化
       config.join_player = [];
-      
-      // configファイルの初期化
       await fs.writeFile(configFile, JSON.stringify(config));
     }
 }

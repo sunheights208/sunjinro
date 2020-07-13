@@ -50,8 +50,6 @@ client.on('ready', message => {
 client.on('message', message => {
   (async () => {
 
-  // console.log(message)
-
 let configData = await fs.readFile(configFile, 'utf-8');
 let config = JSON.parse(configData);
 let gmData = await fs.readFile(config.gm_file, 'utf-8');
@@ -64,7 +62,7 @@ let allPlayerInfo = JSON.parse(playerData);
 
   // match(/hoge/)
   if(message.content.startsWith('初期化')) {
-    if(config.game_master_id && message.author.id != config.game_master_id){
+    if(gmInfo.game_master_id && message.author.id != gmInfo.game_master_id){
       message.reply( 'GMしかコマンドは許可していないよ！' );
       return;
     }
@@ -77,7 +75,7 @@ let allPlayerInfo = JSON.parse(playerData);
       client.channels.cache.get(config.main_ch).send("初期化してね！");
       return false
     }
-    if(config.game_master_id && message.author.id != config.game_master_id){
+    if(gmInfo.game_master_id && message.author.id != gmInfo.game_master_id){
       message.reply( 'GMしかコマンドは許可していないよ！' );
       return;
     }

@@ -191,11 +191,11 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
 
 const breakUp = (client, allPlayerInfo) => {
   client.channels.cache.get('726305512529854504').members.forEach(member => {
-    if(allPlayerInfo[serchPlayerNameFromMsg(allPlayerInfo,message.author.id)].role == '人狼'){
+    if(allPlayerInfo[serchPlayerNameFromMsg(allPlayerInfo,member.id)].role == '人狼'){
         member.voice.setChannel(client.channels.cache.get('726173962446438502'))
     } else {
       client.channels.cache.forEach(channel => {
-        if(channel.type == 'voice' && channel.name == serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){
+        if(channel.type == 'voice' && channel.name == serchPlayerNameFromMsg(allPlayerInfo,member.id)){
           member.voice.setChannel(channel)
         }
       })
@@ -445,7 +445,7 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
       icon_url: client.user.avatarURL()
     },
     title: winSide == 'dark' ? "狼陣営の勝ちです": "村人陣営の勝ちです",
-    description: choice.word + "\n　- " + choice.author,
+    description: choice.word + "\n　ー " + choice.author + " ー",
     color: config.result_color[winSide],
     timestamp: new Date(),
     footer: {

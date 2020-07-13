@@ -64,7 +64,7 @@ let allPlayerInfo = JSON.parse(playerData);
 
   // match(/hoge/)
   if(message.content.startsWith('初期化')) {
-    if(config.gm_file.game_master_id && message.author.id != config.gm_file.game_master_id){
+    if(config.game_master_id && message.author.id != config.game_master_id){
       message.reply( 'GMしかコマンドは許可していないよ！' );
       return;
     }
@@ -77,7 +77,7 @@ let allPlayerInfo = JSON.parse(playerData);
       client.channels.cache.get(config.main_ch).send("初期化してね！");
       return false
     }
-    if(config.gm_file.game_master_id && message.author.id != config.gm_file.game_master_id){
+    if(config.game_master_id && message.author.id != config.game_master_id){
       message.reply( 'GMしかコマンドは許可していないよ！' );
       return;
     }

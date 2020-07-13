@@ -99,7 +99,7 @@ let allPlayerInfo = JSON.parse(playerData);
   if(message.content.startsWith('決選投票')) {
     if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
     let commander = serchPlayerNameFromMsg(allPlayerInfo,message.author.id)
-    if(gmInfo.executor != commander) {
+    if(!message.author.bot && gmInfo.executor != commander) {
       message.reply( '執行人しか実施できないよ' );
       if(config.debug_mode){
         message.reply( 'デバッグのため許可' );
@@ -108,7 +108,7 @@ let allPlayerInfo = JSON.parse(playerData);
       }
     }
 
-    let finalMessage = "決選投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
+    let finalMessage = "これより決選投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
     client.channels.cache.get(config.main_ch).send(finalMessage);
     // 執行人と話してるので無くてOK
     // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.final_vote_plaer);

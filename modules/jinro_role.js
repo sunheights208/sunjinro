@@ -244,7 +244,7 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
     }
 
     // 執行人選出
-    const executor = shuffle(config.join_player).find(player =>hangmans.indexOf(player) == -1 && allPlayerInfo[player].alive);
+    let executor = shuffle(config.join_player).find(player =>hangmans.indexOf(player) == -1 && allPlayerInfo[player].alive);
     gmInfo.executor = executor;
     let executorMessage = "執行人は" + executor + "さんです。\n"
 
@@ -270,6 +270,16 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       // 既に決選投票候補者がある = 決選投票コマンドからの投票になる。
       client.channels.cache.get(config.main_ch).send("今晩は吊られる人はいませんでした。");
       client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
+      return;
+
+    } else if (!executor) {
+      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================\n"
+      + "生存者全員の得票数が同じになりました。これより決選投票に移ります。");
+
+      gmInfo.final_vote_plaer = hangmans;
+      await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+      await sleep (5);
+      await voteTime(client,config,gmInfo,allPlayerInfo);
       return;
       
     } else {

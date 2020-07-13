@@ -19,12 +19,14 @@ const jinroInit = async(client,message,configFile) =>{
       let inputRoleInfoArray = [];
       
     client.guilds.cache.get('221219415650205697').members.cache.forEach(user => {
-        if(inputMemberArray.indexOf(user.displayName) !== -1 ){
-          inputUserInfoArrayForChannel.push({
-            username:user.displayName,
-            id:user.user.id
-          });
-          inputUserInfoArray.push(user.displayName);
+        if(inputMemberArray.includes(user.displayName)){
+          if(!client.users.cache.get(user.id).bot){
+            inputUserInfoArrayForChannel.push({
+              username:user.displayName,
+              id:user.user.id
+            });
+            inputUserInfoArray.push(user.displayName);
+          }
         }
       });  
 

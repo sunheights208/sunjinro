@@ -445,7 +445,7 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
       icon_url: client.user.avatarURL()
     },
     title: winSide == 'dark' ? "狼陣営の勝ちです": "村人陣営の勝ちです",
-    description: choice.word + "\n　ー " + choice.author + " ー",
+    description: choice.word + "\nー " + choice.author + " ー",
     color: config.result_color[winSide],
     timestamp: new Date(),
     footer: {
@@ -491,6 +491,11 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
   let gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   gmInfo.game_master_id = "";
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  await sleep(5);
+  gather(client,allPlayerInfo)
+  client.channels.cache.get('726305512529854504').members.forEach(user => {
+      user.voice.setMute(false);
+  });
   return false;
 }
 

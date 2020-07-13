@@ -351,7 +351,16 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
     ]
   }};
 
-  message.channel.send(result);
+  if(resultDark  && resultWhite){
+    message.channel.send(result);
+  } else {
+    message.reply("今回は結果が出ないよ！")
+  }
+
+  // ゲームが終わったのでGMの初期化
+  let gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
+  gmInfo.game_master_id = "";
+  await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
   return false;
 }
 

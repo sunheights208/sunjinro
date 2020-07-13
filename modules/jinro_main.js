@@ -94,7 +94,7 @@ const jinroInit = async(client,message,configFile) =>{
       })
 
       await fs.writeFile(config.db_file, JSON.stringify(playerInfoArrayStart));
-    
+
       const initGMFile = {
         start:false
       }
@@ -103,7 +103,7 @@ const jinroInit = async(client,message,configFile) =>{
     }
 }
 
-const start = async(client, config, allPlayerInfo, gmInfo) => {
+const start = async(client, config, allPlayerInfo, gmInfo, message) => {
     let roleRaw = config.role_raw;
     let roleArray = shuffle(roleRaw);
     // let roleArray = roleRaw.concat()
@@ -182,6 +182,7 @@ const start = async(client, config, allPlayerInfo, gmInfo) => {
     gmInfo.vote_list = {};
     gmInfo.vote_turn = [];
     gmInfo.toker = [];
+    gmInfo.game_master_id = message.author.id
 
     await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));

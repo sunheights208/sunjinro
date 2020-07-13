@@ -64,20 +64,24 @@ let allPlayerInfo = JSON.parse(playerData);
 
   // match(/hoge/)
   if(message.content.startsWith('初期化')) {
+    if(config.gm_file.game_master_id && message.author.id != config.gm_file.game_master_id){
+      message.reply( 'GMしかコマンドは許可していないよ！' );
+      return;
+    }
     await jinroInit(client,message,configFile);
     return;
   }
   
   if(message.content.startsWith('開始')) {
-    if(!serchPlayerNameFromMsg(allPlayerInfo,message.author.id)){
-      message.reply( '参加者しかコマンドは許可していないよ！' );
+    if(config.gm_file.game_master_id && message.author.id != config.gm_file.game_master_id){
+      message.reply( 'GMしかコマンドは許可していないよ！' );
       return;
     }
     if(message.channel.id != config.main_ch){
       message.reply('#village限定コマンド')
       return
     }
-    await start(client, config, allPlayerInfo, gmInfo);
+    await start(client, config, allPlayerInfo, gmInfo, message);
     if(!await resultCheck(client, config, message, allPlayerInfo)) return false;
     await morning(client, message, config, allPlayerInfo, gmInfo);
 

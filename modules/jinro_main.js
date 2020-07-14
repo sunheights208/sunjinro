@@ -121,6 +121,11 @@ const jinroInit = async(client,message,configFile) =>{
       //configの初期化
       config.join_player = [];
       await fs.writeFile(configFile, JSON.stringify(config));
+
+      const initGMFile = {
+        start:false
+      }
+      await fs.writeFile(config.gm_file, JSON.stringify(initGMFile));
     }
 }
 

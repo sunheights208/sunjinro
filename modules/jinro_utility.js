@@ -12,10 +12,40 @@ const sendMessageToChannel = (id,message) => {
     client.channels.cache.get(id).send(message);
   }
 
+
+const stopGame = async(config,gmInfo,message,allPlayerInfo) => {
+  if(gmInfo.stop) {
+    message.reply("停止中だよ！")
+    return false;
+  }
+
+  if(gmInfo.talkNow || gmInfo.time == 'twilight' || gmInfo.time == 'night'){
+    gmInfo.stop = true;
+    await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+
+
+    let talkTimer = config.timer;
+    let talkCounter = 0;
+    let gmData;
+    while(true){
+      gmData = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
+      if(talkCounter == talkTimer || !gmData.stop) {
+        break;
+      }
+      await sleep(1);
+      ++talkCounter;
+    }
+
+    message.reply("停止したよ！")
+    return true;
+  }
+  return true;
+}
+
 const permitCommand = (config,gmInfo,message,allPlayerInfo) => {
 
   if(config.join_player.length == 0){
-    client.channels.cache.get(config.main_ch).send("初期化してね！");
+    client.channels.cache.get(config.main_ch).send("== 初期化してね！");
     return false
   }
 
@@ -110,6 +140,7 @@ const facilitator = async(client, config) => {
     while(true){
       gmData = await fs.readFile(config.gm_file, 'utf-8');
       innerGmInfo = JSON.parse(gmData);
+
       if(talkCounter == talkTimer) {
         break;
 
@@ -119,6 +150,11 @@ const facilitator = async(client, config) => {
         client.channels.cache.get(config.main_ch).send("　あと30秒");
       } else if (talkTimer - talkCounter == 10){
         client.channels.cache.get(config.main_ch).send("　あと10秒");
+      } else if(innerGmInfo.stop){
+        innerGmInfo.stop = false;
+        innerGmInfo.talkNow = false;
+        await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
+        return false;
       }
       await sleep(1);
       ++talkCounter;
@@ -137,6 +173,7 @@ const facilitator = async(client, config) => {
   gmInfo.talkNow = false;
   gmInfo.nowTalker = "";
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  return true;
 }
 
 const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerList) => {
@@ -172,6 +209,11 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
     client.channels.cache.get(config.main_ch).send("　あと30秒");
     } else if (talkTimer - talkCounter == 10){
       client.channels.cache.get(config.main_ch).send("　あと10秒");
+    }else if(innerGmInfo.stop){
+      innerGmInfo.stop = false;
+      innerGmInfo.talkNow = false;
+      await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
+      return false;
     }
     await sleep(1);
     ++talkCounter;
@@ -187,6 +229,7 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
   gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   gmInfo.talkNow = false;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+  return true;
 }
 
 const breakUp = (client, allPlayerInfo) => {
@@ -493,6 +536,7 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
   await sleep(5);
   gather(client,allPlayerInfo)
+  await sleep(2);
   client.channels.cache.get('726305512529854504').members.forEach(user => {
       user.voice.setMute(false);
   });
@@ -511,5 +555,6 @@ module.exports = {
     gather,
     serchPlayerNameFromMsg,
     finalVoteFacilitator,
-    resultCheck
+    resultCheck,
+    stopGame
 }

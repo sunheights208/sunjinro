@@ -102,6 +102,8 @@ const jinroInit = async(client,message,configFile) =>{
       }
 
       await fs.writeFile(config.gm_file, JSON.stringify(initGMFile));
+      await sleep(3);
+      message.reply("ゲームの準備ができたよ！");
     } else {
       // チャンネルの初期化
       const dontDeleteID =[
@@ -126,10 +128,12 @@ const jinroInit = async(client,message,configFile) =>{
         start:false
       }
       await fs.writeFile(config.gm_file, JSON.stringify(initGMFile));
+      message.reply("チャンネルを消したよ！");
     }
 }
 
 const start = async(client, config, allPlayerInfo, gmInfo, message) => {
+    gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
     let roleRaw = config.role_raw;
     let roleArray = shuffle(roleRaw);
     // let roleArray = roleRaw.concat()
@@ -215,6 +219,7 @@ const start = async(client, config, allPlayerInfo, gmInfo, message) => {
 }
 
 const morning = async(client, message, config, allPlayerInfo, gmInfo) => {
+    sleep(5);
     gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
     gather(client, allPlayerInfo);
     let display = "【朝が来ました】\n";
@@ -295,6 +300,14 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
     gmData = await fs.readFile(config.gm_file, 'utf-8');
     gmInfo = JSON.parse(gmData);
     if(counter == evenigTimer) break;
+
+    if(gmInfo.stop){
+      gmInfo.stop = false;
+      gmInfo.time = "morning";
+      await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+      return false;
+    }
+
     await sleep(1);
     ++counter;
   }
@@ -307,6 +320,7 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
       }
     }
   }
+  return true;
 }
 
 const night = async(client, config, allPlayerInfo, gmInfo) => {
@@ -338,6 +352,14 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
       } else if (!innerGmInfo.bite){
         break;
       }
+
+      if(innerGmInfo.stop){
+        innerGmInfo.stop = false;
+        innerGmInfo.time = "morning";
+        await fs.writeFile(config.gm_file, JSON.stringify(innerGmInfo));
+        return false;
+      }
+
       await sleep(1);
       ++nightCounter;
     }
@@ -345,9 +367,12 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
     client.channels.cache.get('726173962446438502').members.forEach(user => {
       user.voice.setMute(true);
     });
+  await sleep(2);
+  return true;
 }
 
 const voteTime = async(client,config,gmInfo,allPlayerInfo) => {
+  sleep(3);
   gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
 
   let votePlayer = [];

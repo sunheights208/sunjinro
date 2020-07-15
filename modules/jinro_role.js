@@ -261,7 +261,7 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
       client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================\n" + executorMessage);
 
-      await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo, [executor,hangmans[0]]);
+      if(!await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo, [executor,hangmans[0]])) return;
 
       const gmData = await fs.readFile(config.gm_file, 'utf-8');
       gmInfo = JSON.parse(gmData);
@@ -278,10 +278,13 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
 
     } else if (!executor) {
       client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================\n"
-      + "生存者全員の得票数が同じになりました。これより決選投票に移ります。");
+      + "生存者全員の得票数が同じになりました。3人で話し合ってください。");
 
       gmInfo.final_vote_plaer = hangmans;
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
+
+      if(!await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo,hangmans))return;
+      client.channels.cache.get(config.main_ch).send("終了です。\n決選投票を行います。");
       await sleep (5);
       await voteTime(client,config,gmInfo,allPlayerInfo);
       return;
@@ -298,7 +301,7 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
 
         let finalToker = hangmans.concat();
         finalToker.push(executor)
-        await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo,finalToker);
+        if(!await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo,finalToker))return;
         client.channels.cache.get(config.main_ch).send("終了です。\n執行人の方は「吊る [名前]」か「決選投票」のコマンドを実行してください。\n");
       }
     }

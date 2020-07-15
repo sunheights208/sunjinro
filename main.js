@@ -13,7 +13,8 @@ module.exports = {
   gather,
   serchPlayerNameFromMsg,
   finalVoteFacilitator,
-  resultCheck
+  resultCheck,
+  stopGame
 } = require('./modules/jinro_utility.js');
 
 const {
@@ -62,6 +63,7 @@ let allPlayerInfo = JSON.parse(playerData);
 
   // match(/hoge/)
   if(message.content.startsWith('初期化')) {
+    if(!await stopGame(config,gmInfo,message,allPlayerInfo))return;
     if(gmInfo.game_master_id && message.author.id != gmInfo.game_master_id){
       message.reply( 'GMしかコマンドは許可していないよ！' );
       return;
@@ -71,8 +73,9 @@ let allPlayerInfo = JSON.parse(playerData);
   }
   
   if(message.content.startsWith('開始')) {
+    if(!await stopGame(config,gmInfo,message,allPlayerInfo))return;
     if(config.join_player.length == 0){
-      client.channels.cache.get(config.main_ch).send("初期化してね！");
+      client.channels.cache.get(config.main_ch).send("== 初期化してね！");
       return false
     }
     if(gmInfo.game_master_id && message.author.id != gmInfo.game_master_id){
@@ -88,8 +91,8 @@ let allPlayerInfo = JSON.parse(playerData);
     await morning(client, message, config, allPlayerInfo, gmInfo);
 
     // 初日だけ2回回す（パラメータでやればいいのでは？）
-    await facilitator(client, config);
-    await facilitator(client, config);
+    if(!await facilitator(client, config)) return;
+    if(!await facilitator(client, config)) return;
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
@@ -110,7 +113,6 @@ let allPlayerInfo = JSON.parse(playerData);
     client.channels.cache.get(config.main_ch).send(finalMessage);
     // 執行人と話してるので無くてOK
     // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.final_vote_plaer);
-    await sleep (5);
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
@@ -220,20 +222,17 @@ let allPlayerInfo = JSON.parse(playerData);
     }
 
     if(!permitCommand(config,gmInfo,message,allPlayerInfo)) return;
-    await sleep(5);
-    await twilight(client, config, allPlayerInfo, gmInfo, message);
+    if(!await twilight(client, config, allPlayerInfo, gmInfo, message)) return;
     spiritual(client,allPlayerInfo,gmInfo);
-    await night(client, config, allPlayerInfo, gmInfo, message);
+    if(!await night(client, config, allPlayerInfo, gmInfo, message))return;
 
     // 朝の通知
-    await sleep(2);
     let tales = [
       'https://tenor.com/view/wake-up-morning-good-morning-get-up-gif-4736758'
     ]
     while(tales.length != 0){
       client.channels.cache.get(config.main_ch).send(tales[0]);
       tales.shift();
-      await sleep(3);
     }
 
     // 昨晩の結果を取得
@@ -245,7 +244,7 @@ let allPlayerInfo = JSON.parse(playerData);
     // 朝の時間
     if(!await resultCheck(client, config, message, allPlayerInfo)) return false;
     await morning(client, message, config, allPlayerInfo, gmInfo);
-    await facilitator(client, config);
+    if(!await facilitator(client, config))return;
     await voteTime(client,config,gmInfo,allPlayerInfo);
     return;
   }
@@ -256,6 +255,10 @@ let allPlayerInfo = JSON.parse(playerData);
   }
 
   if(message.content.startsWith('戦績')) {
+    if(gmInfo.game_master_id != "" && 726412669090922516 == message.channel.id){
+      message.reply("vilage以外で見るか、ゲームが終わってから見てね！");
+      return;
+    }
     const resultFilePath = "./public/data/result.json";
     const resultFile = JSON.parse(await fs.readFile(resultFilePath, 'utf-8'));
     let allResult = [];

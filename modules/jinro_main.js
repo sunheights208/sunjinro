@@ -299,7 +299,13 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
   while(true){
     gmData = await fs.readFile(config.gm_file, 'utf-8');
     gmInfo = JSON.parse(gmData);
-    if(counter == evenigTimer) break;
+    if(counter == evenigTimer) {
+      break;
+    } else if (evenigTimer - counter == 30){
+      client.channels.cache.get(config.main_ch).send("　あと30秒");
+    } else if (evenigTimer - counter == 10){
+      client.channels.cache.get(config.main_ch).send("　あと10秒");
+    }
 
     if(gmInfo.stop){
       gmInfo.stop = false;
@@ -324,6 +330,11 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
 }
 
 const night = async(client, config, allPlayerInfo, gmInfo) => {
+    // 狼のミュート外し
+    client.channels.cache.get('726173962446438502').members.forEach(user => {
+      user.voice.setMute(false);
+    });
+    
     gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
     // 夜系コマンドの初期化
     let display = "【夜になりました】\n"
@@ -348,6 +359,10 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
       innerGmInfo = JSON.parse(gmData);
       if(nightCounter == nightTimer) {
         break;
+      } else if (nightTimer - nightCounter == 30){
+        client.channels.cache.get(config.main_ch).send("　あと30秒");
+      } else if (nightTimer - nightCounter == 10){
+        client.channels.cache.get(config.main_ch).send("　あと10秒");
 
       } else if (!innerGmInfo.bite){
         break;

@@ -525,9 +525,9 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
   }};
 
   if(resultDark  && resultWhite){
-    message.channel.send(result);
+    client.channels.cache.get(config.main_ch).send(result);
   } else {
-    message.reply("今回は結果が出ないよ！")
+    client.channels.cache.get(config.main_ch).send("今回は結果が出ないよ！")
   }
 
   // ゲームが終わったのでGMの初期化

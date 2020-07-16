@@ -290,10 +290,10 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       return;
       
     } else if(hangmans.length == 0) {
-      client.channels.cache.get(config.main_ch).send("今晩は吊られる人はいませんでした。");
+      client.channels.cache.get(config.main_ch).send("全員棄権したため、今晩は吊られる人はいませんでした。");
       client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
       return;
-      
+
     }else {
       headerMessage += "次の" + hangmans.length + "人が候補となりました。=> " + hangmans + "\n"
       gmInfo.final_vote_plaer = hangmans;

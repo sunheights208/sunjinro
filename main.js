@@ -255,7 +255,7 @@ let allPlayerInfo = JSON.parse(playerData);
   }
 
   if(message.content.startsWith('戦績')) {
-    if(gmInfo.game_master_id != "" && 726412669090922516 == message.channel.id){
+    if(gmInfo.game_master_id && 726412669090922516 == message.channel.id){
       message.reply("vilage以外で見るか、ゲームが終わってから見てね！");
       return;
     }

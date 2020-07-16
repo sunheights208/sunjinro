@@ -289,7 +289,12 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       await voteTime(client,config,gmInfo,allPlayerInfo);
       return;
       
-    } else {
+    } else if(hangmans.length == 0) {
+      client.channels.cache.get(config.main_ch).send("今晩は吊られる人はいませんでした。");
+      client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
+      return;
+      
+    }else {
       headerMessage += "次の" + hangmans.length + "人が候補となりました。=> " + hangmans + "\n"
       gmInfo.final_vote_plaer = hangmans;
       if(executor){

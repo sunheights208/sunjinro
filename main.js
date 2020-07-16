@@ -337,6 +337,11 @@ let allPlayerInfo = JSON.parse(playerData);
     return;
   }
 
+  if(message.content.startsWith('バックアップ')) {
+    client.channels.cache.get(config.main_ch).send({files: [ './public/data/result.json' ] })
+    return;
+  }
+
 })().catch(
   (err) => {
     const error = {

@@ -271,7 +271,7 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
     let role = allPlayerInfo[key].role;
     let alive = allPlayerInfo[key].alive;
     if(alive && role == '人狼') ++darkSide
-    if(alive && (role != '人狼' && role != '狂人')) ++whiteSide;
+    if(alive && role != '人狼') ++whiteSide;
   }
   let winSide="";
   if(darkSide == 0){

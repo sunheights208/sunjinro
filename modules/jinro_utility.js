@@ -545,6 +545,7 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
   // ゲームが終わったのでGMの初期化
   let gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   gmInfo.game_master_id = "";
+  gmInfo.time = 'morning';
   gmInfo.talkNow = false;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
   await sleep(5);

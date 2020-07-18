@@ -1,1 +1,42 @@
-{"timer":60,"allow_role":["人狼","占い師","村人","騎士","霊能者","狂人"],"role_raw":["人狼","村人","占い師"],"join_player":[],"emoji":{"人狼":"<:jinro_jinro:723955735599251546>","占い師":"<:jinro_uranai:723954556505161880>","村人":"<:jinro_murabito:723954539882872893>","騎士":"<:jinro_kishi:723954596455645255>","霊能者":"<:jinro_reinou:723954577015046145>","狂人":"<:jinro_kyoujin:723954645495709816>"},"other_emoji":{"人狼":"<:jinro_jinro:723955735599251546>"},"result_emoji":{"dark":"723955735599251546","white":"723954539882872893","result":"540451002302857216"},"result_color":{"dark":"0xED1B41","white":"0x4169e1","result":"0xff8c00"},"main_ch":"726412669090922516","db_file":"./public/data/playerInfo.json","gm_file":"./public/data/gm.json","debug_mode":true}
+{
+    "timer": 60,
+    "allow_role": [
+        "人狼",
+        "占い師",
+        "村人",
+        "騎士",
+        "霊能者",
+        "狂人"
+    ],
+    "role_raw": [
+        "人狼",
+        "村人",
+        "占い師"
+    ],
+    "join_player": [],
+    "emoji": {
+        "人狼": "<:jinro_jinro:723955735599251546>",
+        "占い師": "<:jinro_uranai:723954556505161880>",
+        "村人": "<:jinro_murabito:723954539882872893>",
+        "騎士": "<:jinro_kishi:723954596455645255>",
+        "霊能者": "<:jinro_reinou:723954577015046145>",
+        "狂人": "<:jinro_kyoujin:723954645495709816>"
+    },
+    "other_emoji": {
+        "人狼": "<:jinro_jinro:723955735599251546>"
+    },
+    "result_emoji": {
+        "dark": "723955735599251546",
+        "white": "723954539882872893",
+        "result": "540451002302857216"
+    },
+    "result_color": {
+        "dark": "0xED1B41",
+        "white": "0x4169e1",
+        "result": "0xff8c00"
+    },
+    "main_ch": "726412669090922516",
+    "db_file": "./public/data/playerInfo.json",
+    "gm_file": "./public/data/gm.json",
+    "debug_mode": false
+}

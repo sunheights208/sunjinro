@@ -331,7 +331,7 @@ let allPlayerInfo = JSON.parse(playerData);
   if(message.content.startsWith('デバッグモードOFF')) {
     let debugConfig2 = JSON.parse(await fs.readFile(configFile, 'utf-8'));
 
-    debugConfig2.writeFile = false;
+    debugConfig2.debug_mode = false;
     await fs.writeFile(configFile, JSON.stringify(debugConfig2));
     message.reply("OFF")
     return;

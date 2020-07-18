@@ -476,6 +476,18 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
     {
       word:"男はよ、女に騙されるために生きてんだ",
       author:"ルパン三世"
+    },
+    {
+      word:"砂田もそろそろ嘘つけるようになったでしょ",
+      author:"かいかい"
+    },
+    {
+      word:"私もバグってた",
+      author:"みく"
+    },
+    {
+      word:"俺はマジで人狼じゃない。これゲームのバグじゃね？",
+      author:"かいかい"
     }
   ]
 
@@ -533,6 +545,7 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
   // ゲームが終わったのでGMの初期化
   let gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
   gmInfo.game_master_id = "";
+  gmInfo.talkNow = false;
   await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
   await sleep(5);
   gather(client,allPlayerInfo)

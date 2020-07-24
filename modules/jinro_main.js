@@ -136,7 +136,9 @@ const start = async(client, config, allPlayerInfo, gmInfo, message) => {
     gmInfo = JSON.parse(await fs.readFile(config.gm_file, 'utf-8'));
     let roleRaw = config.role_raw;
     let roleArray = shuffle(roleRaw);
-    // let roleArray = roleRaw.concat()
+    client.guilds.cache.get('221219415650205697').members.cache.forEach(res => {
+      res.roles.remove('733319585985462382')
+    });
     let wolfsCannel = [
       {
         id: client.guilds.cache.get('221219415650205697').id,
@@ -230,7 +232,7 @@ const morning = async(client, message, config, allPlayerInfo, gmInfo) => {
 
     display += gmInfo.death ? jinroEmoji + gmInfo.death + "さんが噛まれて死にました。" + jinroEmoji + "\n": "昨晩は誰も噛まれませんでした。\n"
     
-    display += situation(allPlayerInfo);
+    display += situation(allPlayerInfo,client);
   
     display += "=========================\n"
     display += "【この順番で話してね！】\n"

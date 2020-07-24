@@ -168,7 +168,7 @@ const bite = async(config,gmInfo,message,allPlayerInfo,timerFile) => {
 
 const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
 
-  if(!allPlayerInfo[message.channel.name].alive){
+  if(allPlayerInfo[message.channel.name] && !allPlayerInfo[message.channel.name].alive){
     message.reply( '君！死んでるよ！' );
     return;
   }

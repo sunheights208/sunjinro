@@ -100,13 +100,16 @@ const serchPlayerNameFromMsg = (allPlayerInfo,id) =>{
   return player;
 }
 
-const situation = (allPlayerInfo) => {
+const situation = (allPlayerInfo,client) => {
   let display = "";
   for (let key in allPlayerInfo) {
     const playerInfo = allPlayerInfo[key]
-    const displayAlive = playerInfo.alive ? "生存" : "死亡" 
-    display += 
-      key + "：" + displayAlive + "\n"
+    if(playerInfo.alive){
+      display += key + "：生存\n"
+    } else if(!playerInfo.alive){
+      display += "~~" + key + "~~：死亡\n"
+      client.guilds.cache.get('221219415650205697').members.cache.get(playerInfo.id).roles.add('733319585985462382')
+    }
   }
   return display;
 }

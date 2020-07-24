@@ -191,7 +191,7 @@ let allPlayerInfo = JSON.parse(playerData);
     playerInfo.alive = false;
     await fs.writeFile(config.db_file, JSON.stringify(allPlayerInfo));
 
-    message.reply( hangmanName + 'さんを吊りました！\n====================\n' + situation(allPlayerInfo) );
+    message.reply( hangmanName + 'さんを吊りました！\n====================\n' + situation(allPlayerInfo,client) );
 
     gmInfo.hang_done=true;
     gmInfo.hang=false;
@@ -305,6 +305,10 @@ let allPlayerInfo = JSON.parse(playerData);
     }};
   
     message.channel.send(result);
+    return;
+  }
+
+  if(message.content.startsWith('revive')) {
     return;
   }
 

@@ -8,10 +8,13 @@ const shuffle = ([...array]) => {
     return array;
 }
 
-const sendMessageToChannel = (id,message) => {
-    client.channels.cache.get(id).send(message);
+const sendMessageToAll = (client, config, allPlayerInfo, message) => {
+    client.channels.cache.get(config.main_ch).send(message);
+    
+    for(key in allPlayerInfo){
+      client.channels.cache.get(allPlayerInfo[key].channel_id).send(message);
+    }
   }
-
 
 const stopGame = async(config,gmInfo,message,allPlayerInfo) => {
   if(gmInfo.stop) {
@@ -133,8 +136,7 @@ const facilitator = async(client, config) => {
         user.voice.setMute(true);
       }
     });
-    client.channels.cache.get(config.main_ch).send(toker + "さん。発言してください。");
-    client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
+    sendMessageToAll(client, config, allPlayerInfo, toker + "さん。発言してください。");
 
     let talkTimer = config.timer;
     let talkCounter = 0;
@@ -150,9 +152,9 @@ const facilitator = async(client, config) => {
       } else if (!innerGmInfo.talkNow){
         break;
       } else if (talkTimer - talkCounter == 30){
-        client.channels.cache.get(config.main_ch).send("　あと30秒");
+        sendMessageToAll(client, config, allPlayerInfo, "　あと30秒");
       } else if (talkTimer - talkCounter == 10){
-        client.channels.cache.get(config.main_ch).send("　あと10秒");
+        sendMessageToAll(client, config, allPlayerInfo, "　あと10秒");
       } else if(innerGmInfo.stop){
         innerGmInfo.stop = false;
         innerGmInfo.talkNow = false;
@@ -189,9 +191,9 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
     client.channels.cache.get('726305512529854504').members.forEach(user => {
       if(user.displayName == toker) user.voice.setMute(false);
     });
-    client.channels.cache.get(allPlayerInfo[toker].channel_id).send(toker + "さん。発言してください。");
+    sendMessageToAll(client, config, allPlayerInfo, toker + "さん。発言してください。");
   }
-  client.channels.cache.get(config.main_ch).send("それでは次の"+tokerList.length + "名の方に発言を許可します。\n[ " + tokerList + "]");
+  sendMessageToAll(client, config, allPlayerInfo, "それでは次の"+tokerList.length + "名の方に発言を許可します。\n[ " + tokerList + "]");
 
   // 議論タイム
   let talkTimer = config.timer;
@@ -209,9 +211,9 @@ const finalVoteFacilitator = async(client, config, gmInfo, allPlayerInfo, tokerL
     } else if (!innerGmInfo.talkNow){
       break;
     } else if (talkTimer - talkCounter == 30){
-    client.channels.cache.get(config.main_ch).send("　あと30秒");
+      sendMessageToAll(client, config, allPlayerInfo, "　あと30秒");
     } else if (talkTimer - talkCounter == 10){
-      client.channels.cache.get(config.main_ch).send("　あと10秒");
+      sendMessageToAll(client, config, allPlayerInfo, "　あと10秒");
     }else if(innerGmInfo.stop){
       innerGmInfo.stop = false;
       innerGmInfo.talkNow = false;
@@ -540,9 +542,9 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
   }};
 
   if(resultDark  && resultWhite){
-    client.channels.cache.get(config.main_ch).send(result);
+    sendMessageToAll(client, config, allPlayerInfo, result);
   } else {
-    client.channels.cache.get(config.main_ch).send("今回は結果が出ないよ！")
+    sendMessageToAll(client, config, allPlayerInfo, "今回は結果が出ないよ！");
   }
 
   // ゲームが終わったのでGMの初期化
@@ -562,7 +564,7 @@ const resultCheck = async(client, config, message, allPlayerInfo) => {
 
 module.exports = {
     shuffle,
-    sendMessageToChannel,
+    sendMessageToAll,
     permitCommand,
     serchRolePlayer,
     situation,

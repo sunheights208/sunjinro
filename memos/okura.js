@@ -96,7 +96,7 @@
         console.log(allPlayerInfo[key])
       }
     
-      message.channel.send({embed: {
+      sendMessageToAll(client, config, allPlayerInfo, {embed: {
         author: {
           name: "サンハイツ人狼",
           url: "https://github.com/sunheights208/sunjinro",

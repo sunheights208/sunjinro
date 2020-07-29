@@ -243,7 +243,7 @@ const morning = async(client, message, config, allPlayerInfo, gmInfo) => {
       }
     });
 
-    message.channel.send(display);
+    sendMessageToAll(client, config, allPlayerInfo, display);
 
     // 朝系コマンドの初期化
     // #初期化
@@ -268,8 +268,8 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
 
   let display = "【黄昏時になりました】\n"
   + "占い師と騎士は1分以内に行動を終わらせてね！"
-      
-  client.channels.cache.get(config.main_ch).send(display);
+
+  sendMessageToAll(client, config, allPlayerInfo, display);
 
   gmInfo.fortune = true;
   gmInfo.knight = true;
@@ -304,9 +304,9 @@ const twilight = async(client, config, allPlayerInfo, gmInfo) => {
     if(counter == evenigTimer) {
       break;
     } else if (evenigTimer - counter == 30){
-      client.channels.cache.get(config.main_ch).send("　あと30秒");
+      sendMessageToAll(client, config, allPlayerInfo, "　あと30秒");
     } else if (evenigTimer - counter == 10){
-      client.channels.cache.get(config.main_ch).send("　あと10秒");
+      sendMessageToAll(client, config, allPlayerInfo, "　あと10秒");
     }
 
     if(gmInfo.stop){
@@ -341,8 +341,8 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
     // 夜系コマンドの初期化
     let display = "【夜になりました】\n"
     + "人狼は1分以内に行動を終わらせてね！"
-        
-    client.channels.cache.get(config.main_ch).send(display);
+
+    sendMessageToAll(client, config, allPlayerInfo, display);
     client.channels.cache.get(serchRolePlayer(allPlayerInfo,'人狼')[0].channel_id).send(
       "1分以内に「噛む 〇〇」コマンドを打って行動を終わらせてね！\n時間切れになったら何もできなくなるから気をつけてね！"
     );
@@ -362,9 +362,9 @@ const night = async(client, config, allPlayerInfo, gmInfo) => {
       if(nightCounter == nightTimer) {
         break;
       } else if (nightTimer - nightCounter == 30){
-        client.channels.cache.get(config.main_ch).send("　あと30秒");
+        sendMessageToAll(client, config, allPlayerInfo, "　あと30秒");
       } else if (nightTimer - nightCounter == 10){
-        client.channels.cache.get(config.main_ch).send("　あと10秒");
+        sendMessageToAll(client, config, allPlayerInfo, "　あと10秒");
 
       } else if (!innerGmInfo.bite){
         break;
@@ -403,8 +403,8 @@ const voteTime = async(client,config,gmInfo,allPlayerInfo) => {
   let voteMassage = "【投票の時間が来ました】\n"
   +"まずは" + votePlayer[0] + "さんから投票してください！"
 
-  client.channels.cache.get(allPlayerInfo[votePlayer[0]].channel_id).send("まずは" + votePlayer[0] + "さんから投票してください\n棄権する場合は「投票 棄権」って入力してね！");
-  client.channels.cache.get(config.main_ch).send(voteMassage);
+  sendMessageToAll(client, config, allPlayerInfo, voteMassage);
+  // client.channels.cache.get(allPlayerInfo[votePlayer[0]].channel_id).send("まずは" + votePlayer[0] + "さんから投票してください\n棄権する場合は「投票 棄権」って入力してね！");
 
   gmInfo.vote_turn=votePlayer;
   gmInfo.vote_list={};

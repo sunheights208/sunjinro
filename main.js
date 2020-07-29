@@ -3,7 +3,7 @@ const fs = require('fs/promises');
 require('dotenv').config();
 module.exports = {
   shuffle,
-  sendMessageToChannel,
+  sendMessageToAll,
   permitCommand,
   serchRolePlayer,
   situation,
@@ -110,7 +110,7 @@ let allPlayerInfo = JSON.parse(playerData);
     }
 
     let finalMessage = "これより決選投票に移ります。\n候補者の中から選出してください。=> " + gmInfo.final_vote_plaer;
-    client.channels.cache.get(config.main_ch).send(finalMessage);
+    sendMessageToAll(client, config, allPlayerInfo, finalMessage);
     // 執行人と話してるので無くてOK
     // await facilitator(client, config, gmInfo, allPlayerInfo, gmInfo.final_vote_plaer);
     await voteTime(client,config,gmInfo,allPlayerInfo);
@@ -200,7 +200,7 @@ let allPlayerInfo = JSON.parse(playerData);
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
     if(!await resultCheck(client, config, message, allPlayerInfo)) return; 
-    client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
+    sendMessageToAll(client, config, allPlayerInfo, "===== 投票終了 =====");
     return;
   }
   
@@ -231,7 +231,7 @@ let allPlayerInfo = JSON.parse(playerData);
       'https://tenor.com/view/wake-up-morning-good-morning-get-up-gif-4736758'
     ]
     while(tales.length != 0){
-      client.channels.cache.get(config.main_ch).send(tales[0]);
+      sendMessageToAll(client, config, allPlayerInfo, tales[0]);
       tales.shift();
     }
 
@@ -304,7 +304,7 @@ let allPlayerInfo = JSON.parse(playerData);
       fields: allResult
     }};
   
-    message.channel.send(result);
+    sendMessageToAll(client, config, allPlayerInfo, result);
     return;
   }
 

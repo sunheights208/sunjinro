@@ -225,8 +225,9 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
 
   // 結果発表のタイミング判定
   if(gmInfo.vote_turn.length != 0) {
-    client.channels.cache.get(allPlayerInfo[gmInfo.vote_turn[0]].channel_id).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！\n棄権する場合は「投票 棄権」って入力してね！");
-    client.channels.cache.get(config.main_ch).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！");
+
+    sendMessageToAll(client, config, allPlayerInfo, "次に" + gmInfo.vote_turn[0] + "さん、投票してください！");
+    // client.channels.cache.get(allPlayerInfo[gmInfo.vote_turn[0]].channel_id).send("次に" + gmInfo.vote_turn[0] + "さん、投票してください！\n棄権する場合は「投票 棄権」って入力してね！");
     await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
   } else {
     // 集計
@@ -259,39 +260,39 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       gmInfo.vote_time = false;
       gmInfo.hangman=hangmans[0];
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
-      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================\n" + executorMessage);
+      sendMessageToAll(client,  config, allPlayerInfo, headerMessage + todayResultMessage + "\n============================================\n" + executorMessage);
 
       if(!await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo, [executor,hangmans[0]])) return;
 
       const gmData = await fs.readFile(config.gm_file, 'utf-8');
       gmInfo = JSON.parse(gmData);
       if(gmInfo.hang){
-        client.channels.cache.get(config.main_ch).send("終了です。\n");
-        client.channels.cache.get(config.main_ch).send("吊る");
+        sendMessageToAll(client,  config, allPlayerInfo, "終了です。\n");
+        sendMessageToAll(client,  config, allPlayerInfo, "吊る");
       }
 
     } else if (gmInfo.final_vote_plaer.length > 0) {
       // 既に決選投票候補者がある = 決選投票コマンドからの投票になる。
-      client.channels.cache.get(config.main_ch).send("今晩は吊られる人はいませんでした。");
-      client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
+      sendMessageToAll(client,  config, allPlayerInfo, "今晩は吊られる人はいませんでした。");
+      sendMessageToAll(client,  config, allPlayerInfo, "===== 投票終了 =====");
       return;
 
     } else if (!executor) {
-      client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n============================================\n"
+      sendMessageToAll(client,  config, allPlayerInfo, headerMessage + todayResultMessage + "\n============================================\n"
       + "生存者全員の得票数が同じになりました。3人で話し合ってください。");
 
       gmInfo.final_vote_plaer = hangmans;
       await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
       if(!await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo,hangmans))return;
-      client.channels.cache.get(config.main_ch).send("終了です。\n決選投票を行います。");
+      sendMessageToAll(client,  config, allPlayerInfo, "終了です。\n決選投票を行います。");
       await sleep (5);
       await voteTime(client,config,gmInfo,allPlayerInfo);
       return;
       
     } else if(hangmans.length == 0) {
-      client.channels.cache.get(config.main_ch).send("全員棄権したため、今晩は吊られる人はいませんでした。");
-      client.channels.cache.get(config.main_ch).send("===== 投票終了 =====");
+      sendMessageToAll(client,  config, allPlayerInfo, "全員棄権したため、今晩は吊られる人はいませんでした。");
+      sendMessageToAll(client,  config, allPlayerInfo, "===== 投票終了 =====");
       return;
 
     }else {
@@ -300,14 +301,15 @@ const vote = async(client,config,gmInfo,message,allPlayerInfo) => {
       if(executor){
         executorMessage += "これより執行候補者と執行人で話し合いを行っていただきます。\n"
         + "制限時間は1分。発言順の制御は行いませんので、自由に議論を行ってください。"
-        client.channels.cache.get(config.main_ch).send(headerMessage + todayResultMessage + "\n================\n" + executorMessage);
+
+        sendMessageToAll(client,  config, allPlayerInfo, headerMessage + todayResultMessage + "\n================\n" + executorMessage);
         
         await fs.writeFile(config.gm_file, JSON.stringify(gmInfo));
 
         let finalToker = hangmans.concat();
         finalToker.push(executor)
         if(!await finalVoteFacilitator(client, config, gmInfo, allPlayerInfo,finalToker))return;
-        client.channels.cache.get(config.main_ch).send("終了です。\n執行人の方は「吊る [名前]」か「決選投票」のコマンドを実行してください。\n");
+        sendMessageToAll(client,  config, allPlayerInfo, "終了です。\n執行人の方は「吊る [名前]」か「決選投票」のコマンドを実行してください。\n");
       }
     }
   }

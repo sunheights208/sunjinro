@@ -37,12 +37,19 @@ const {
 // Discord bot implements
 const discord = require('discord.js');
 const client = new discord.Client();
+const clientLol = new discord.Client();
 
 // master confog
 // このまま使わないこと！
 const voiceCannel = '726305512529854504';
 const configFile = "./public/data/jinroConfig.json";
 const timerFile = './public/data/realtime_flags/timer.json'
+
+
+
+clientLol.on('ready', message => {
+	console.log('lol bot is ready!');
+});
 
 client.on('ready', message => {
 	console.log('bot is ready!');
@@ -364,4 +371,43 @@ if(process.env.DISCORD_BOT_TOKEN == undefined)
 	process.exit(0);
 }
 
+
+clientLol.on('message', message => {
+  (async () => {
+
+  //botチャンネルのみ
+  if (message.channel.id != '716573977429934121') return;
+
+  // match(/hoge/)
+  if(message.content.startsWith('!opgg')) {
+    let playerUrl = "https://jp.op.gg/summoner/userName={userName}"
+    let champUrl = "https://jp.op.gg/champion/{champ}"
+    const command = message.content.replace(/　/gi, ' ').split(' ')[1];
+
+    if(command && command == "c"){
+      const champ = message.content.replace(/　/gi, ' ').split(' ')[2];
+      message.channel.send(champUrl.replace(/{champ}/g, champ));
+      return;
+    }
+
+    if(command){
+      const name = message.content.replace(/　/gi, ' ').split(' ')[1];
+      message.channel.send(playerUrl.replace(/{userName}/g, name));
+      return;
+    }
+    return;
+  }
+})().catch(
+  (err) => {
+    const error = {
+      ERR:err,
+      mesg:message.content,
+      autor:message.author
+    }
+    console.log(error)
+  }
+);
+});
+
 client.login( process.env.DISCORD_BOT_TOKEN );
+clientLol.login( "NzI3MzkyMzAyMzAxMDUyOTI5.XvrK3w.zCnghxr1N-38DE4so-PzSDdYyP4" );

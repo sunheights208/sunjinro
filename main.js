@@ -45,8 +45,6 @@ const voiceCannel = '726305512529854504';
 const configFile = "./public/data/jinroConfig.json";
 const timerFile = './public/data/realtime_flags/timer.json'
 
-
-
 clientLol.on('ready', message => {
 	console.log('lol bot is ready!');
 });

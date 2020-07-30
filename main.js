@@ -408,4 +408,4 @@ clientLol.on('message', message => {
 });
 
 client.login( process.env.DISCORD_BOT_TOKEN );
-clientLol.login( "NzI3MzkyMzAyMzAxMDUyOTI5.XvrK3w.zCnghxr1N-38DE4so-PzSDdYyP4" );
+clientLol.login( process.env.DISCORD_LOL_BOT_TOKEN );

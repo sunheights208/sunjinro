@@ -56,15 +56,15 @@ client.on('ready', message => {
 client.on('message', message => {
   (async () => {
 
-let configData = await fs.readFile(configFile, 'utf-8');
-let config = JSON.parse(configData);
-let gmData = await fs.readFile(config.gm_file, 'utf-8');
-let gmInfo = JSON.parse(gmData);
-let playerData = await fs.readFile(config.db_file, 'utf-8');
-let allPlayerInfo = JSON.parse(playerData);
-
   //人狼カテゴリチャンネルの発言以外は弾く
   if (message.channel.parentID != '722131778403303577') return;
+
+  let configData = await fs.readFile(configFile, 'utf-8');
+  let config = JSON.parse(configData);
+  let gmData = await fs.readFile(config.gm_file, 'utf-8');
+  let gmInfo = JSON.parse(gmData);
+  let playerData = await fs.readFile(config.db_file, 'utf-8');
+  let allPlayerInfo = JSON.parse(playerData);
 
   // match(/hoge/)
   if(message.content.startsWith('初期化')) {
@@ -383,9 +383,15 @@ clientLol.on('message', message => {
     const command = message.content.replace(/　/gi, ' ').split(' ')[1];
 
     if(command && command == "c"){
+      let champs = JSON.parse(await fs.readFile("./public/lol/sun_lol_jp.json", 'utf-8'));
       const champ = message.content.replace(/　/gi, ' ').split(' ')[2];
-      message.channel.send(champUrl.replace(/{champ}/g, champ));
-      return;
+
+      for(key in champs){
+        if(champs[key].alias.includes(champ)){
+          message.channel.send(champUrl.replace(/{champ}/g, key));
+        return;
+        }
+      }
     }
 
     if(command){

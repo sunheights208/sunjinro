@@ -377,7 +377,7 @@ clientLol.on('message', message => {
   if (message.channel.id != '716573977429934121') return;
 
   // match(/hoge/)
-  if(message.content.startsWith('!opgg')) {
+  if(message.content.startsWith('opgg')) {
     let playerUrl = "https://jp.op.gg/summoner/userName={userName}"
     let champUrl = "https://jp.op.gg/champion/{champ}"
     const command = message.content.replace(/　/gi, ' ').split(' ')[1];

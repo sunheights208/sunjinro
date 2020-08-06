@@ -376,7 +376,7 @@ clientLol.on('message', message => {
   //botチャンネルのみ
   if (message.channel.id != '716573977429934121') return;
 
-  // match(/hoge/)
+  // match(/hoge)
   if(message.content.startsWith('opgg')) {
     let playerUrl = "https://jp.op.gg/summoner/userName={userName}"
     let champUrl = "https://jp.op.gg/champion/{champ}"

@@ -444,24 +444,26 @@ joinBot.on("voiceStateUpdate", (oldState, newState) => {
     && !newState.guild.members.cache.get(newState.id).user.bot) {
 
     // 対象チャンネルに居る人間の数を数える
-    let joinMemberCount = 0;
+    let inMemberArray = [];
 
     newState.guild.voiceStates.cache.forEach(voiceStatesUser => {
       var inRoomMenber = newState.guild.members.cache.get(voiceStatesUser.id);
-      if (!inRoomMenber.user.bot && voiceStatesUser.channelID === joinOutVoiceCannel) joinMemberCount++
+      if (!inRoomMenber.user.bot && voiceStatesUser.channelID === joinOutVoiceCannel) {
+        inMemberArray.push(voiceStatesUser.id);
+      }
     });
 
     // メンバーの数に応じて処理を分岐
-    if (joinMemberCount === 1) {
+    if (inMemberArray.includes(newState.id)) {
       const joinMember = newState.guild.members.cache.get(newState.id);
       const joinUserNickName = joinMember.nickname;
-      joinBot.channels.cache.get(joinOutCannel).bulkDelete(5);
-      joinBot.channels.cache.get(joinOutCannel).send('<@&831356224829390848>\n' + joinUserNickName + "がいるよ！");
+      joinBot.channels.cache.get(joinOutCannel).bulkDelete(2);
+      joinBot.channels.cache.get(joinOutCannel).send('<@&831356224829390848>\n` ' + joinUserNickName + " `が` room1 `に入ったよ！\n" + "今` " + inMemberArray.length + " `人いるよ！");
     }
-    else if (joinMemberCount === 0) {
+    else if (inMemberArray.length === 0) {
       const leaveMember = oldState.guild.members.cache.get(newState.id);
       const leaveUserNickName = leaveMember.nickname;
-      joinBot.channels.cache.get(joinOutCannel).send("みんないなくなったよ");
+      joinBot.channels.cache.get(joinOutCannel).send('<@&831356224829390848>\n' + "みんないなくなったよ");
     }
   }
 });

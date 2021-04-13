@@ -440,7 +440,8 @@ joinBot.on('message', message => {
 })
 
 joinBot.on("voiceStateUpdate", (oldState, newState) => {
-  if ((newState.channelID == joinOutVoiceCannel || oldState.channelID == joinOutVoiceCannel)
+  if (newState.channelID != oldState.channelID
+    && (newState.channelID == joinOutVoiceCannel || oldState.channelID == joinOutVoiceCannel)
     && !newState.guild.members.cache.get(newState.id).user.bot) {
 
     // 対象チャンネルに居る人間の数を数える

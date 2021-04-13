@@ -452,13 +452,13 @@ joinBot.on("voiceStateUpdate", (oldState, newState) => {
     });
 
     // メンバーの数に応じて処理を分岐
-    if (joinMemberCount > 0) {
+    if (joinMemberCount === 1) {
       const joinMember = newState.guild.members.cache.get(newState.id);
       const joinUserNickName = joinMember.nickname;
       joinBot.channels.cache.get(joinOutCannel).bulkDelete(5);
       joinBot.channels.cache.get(joinOutCannel).send('<@&831356224829390848>\n' + joinUserNickName + "がいるよ！");
     }
-    else if (joinMemberCount <= 0) {
+    else if (joinMemberCount === 0) {
       const leaveMember = oldState.guild.members.cache.get(newState.id);
       const leaveUserNickName = leaveMember.nickname;
       joinBot.channels.cache.get(joinOutCannel).send("みんないなくなったよ");

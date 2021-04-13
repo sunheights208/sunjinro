@@ -457,7 +457,7 @@ joinBot.on("voiceStateUpdate", (oldState, newState) => {
     // メンバーの数に応じて処理を分岐
     if (inMemberArray.includes(newState.id)) {
       const joinMember = newState.guild.members.cache.get(newState.id);
-      const joinUserNickName = joinMember.nickname;
+      const joinUserNickName = joinMember.nickname ? joinMember.nickname : joinMember.user.username;
       joinBot.channels.cache.get(joinOutCannel).bulkDelete(2);
       joinBot.channels.cache.get(joinOutCannel).send('<@&831356224829390848>\n` ' + joinUserNickName + " `が` room1 `に入ったよ！\n" + "今` " + inMemberArray.length + " `人いるよ！");
     }

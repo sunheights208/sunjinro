@@ -47,7 +47,6 @@ const configFile = "./public/data/jinroConfig.json";
 const timerFile = './public/data/realtime_flags/timer.json'
 const joinOutCannel = '831326979726901338';
 const joinOutVoiceCannel = '221219416573083648';
-
 const joinNotificateRole = '831356224829390848';
 
 joinBot.on('ready', message => {
@@ -460,6 +459,12 @@ joinBot.on("voiceStateUpdate", (oldState, newState) => {
       const joinUserNickName = joinMember.nickname ? joinMember.nickname : joinMember.user.username;
       joinBot.channels.cache.get(joinOutCannel).bulkDelete(2);
       joinBot.channels.cache.get(joinOutCannel).send('<@&831356224829390848>\n` ' + joinUserNickName + " `が` room1 `に入ったよ！\n" + "今` " + inMemberArray.length + " `人いるよ！");
+    }
+    else if (inMemberArray.length > 0) {
+      const joinMember = newState.guild.members.cache.get(newState.id);
+      const joinUserNickName = joinMember.nickname ? joinMember.nickname : joinMember.user.username;
+      joinBot.channels.cache.get(joinOutCannel).bulkDelete(2);
+      joinBot.channels.cache.get(joinOutCannel).send('<@&831356224829390848>\n` ' + joinUserNickName + " `が` room1 `から退出したよ！\n" + "今` " + inMemberArray.length + " `人いるよ！");
     }
     else if (inMemberArray.length === 0) {
       const leaveMember = oldState.guild.members.cache.get(newState.id);

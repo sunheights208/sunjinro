@@ -46,7 +46,7 @@ const voiceCannel = '726305512529854504';
 const configFile = "./public/data/jinroConfig.json";
 const timerFile = './public/data/realtime_flags/timer.json'
 const joinOutCannel = '831326979726901338';
-const joinOutVoiceCannel = '221219416573083648';
+const joinOutVoiceCannel = '842338789841829888';
 const joinNotificateRole = '831356224829390848';
 
 joinBot.on('ready', message => {

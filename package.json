@@ -4,7 +4,7 @@
   "description": "discord bot sample on Glitch",
   "main": "main.js",
   "dependencies": {
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "fs.promises": "^0.1.2"

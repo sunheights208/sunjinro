@@ -1,6 +1,6 @@
 // Response for Uptime Robot
 const fs = require('fs/promises');
-require('dotenv').config();
+// require('dotenv').config();
 module.exports = {
   shuffle,
   sendMessageToAll,

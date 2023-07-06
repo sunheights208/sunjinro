@@ -7,18 +7,22 @@
 sunjinro
 ├ main.js .. メイン処理。各botの処理が書いてある。
 ├ modules .. サブ処理。
-│　├ .md
-│　├ ○○.md
-│　└ ○○.md
+│　├ jinro_main.js
+│　├ jinro_role.js
+│　└ jinro_utility.js
 │
-├ 第２章 .. フォルダを作成
-
-　　～
-
-└ 画像用フォルダ .. 細分化してもよい
-　　├ ○○.jpg
-　　├ ○○.png
-　　└ ○○.xxx
+├ public .. 設定ファイルとデータの格納場所。ファイルをDB代わりに使っている。
+│　├ data
+│　　├ realtime_flags
+│　　　　├ file_lock.json
+│　　　　└ timer.json
+│　　├ gm.json
+│　　├ jinroConfig.json
+│　　├ playerInfo.json
+│　　└ result.json
+│　└ lol
+│　　└ sun_lol_jp.json
+└
 ```
 
 ## 機能

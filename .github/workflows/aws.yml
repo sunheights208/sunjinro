@@ -69,9 +69,7 @@ jobs:
           HOST: ${{ secrets.EC2_HOST }}
           USER: ${{ secrets.EC2_USER }}
           PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          SAMPLE_ENV_A: ${{ secrets.SAMPLE_ENV_A }}
-          SAMPLE_ENV_B: ${{ secrets.SAMPLE_ENV_B }}
-          SAMPLE_ENV_C: ${{ secrets.SAMPLE_ENV_C }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem

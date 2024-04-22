@@ -1,0 +1,116 @@
+name: Node.js Deploy Pipeline
+
+on:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+    # 手動実行時は、選択したrunTypeによって実行するjobを変更する
+    inputs:
+      runType:
+        type: choice
+        required: true
+        description: ''
+        default: 'デプロイ'
+        options:
+          - 'デプロイ'
+          - 'アプリケーション 再起動'
+          - 'アプリケーション 停止'
+jobs:
+  # 現在動作しているNode.jsプロセス停止するjob。どの処理でも必ず最初に実行する。
+  kill_process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update OpenSSL
+        run: sudo apt-get update && sudo apt-get install -y openssl
+
+      - name: Down Process
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        run: |
+          : # 秘密鍵ファイルを一時的に作成し、権限を最小のものにする(エラーを出さないため)
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          : # EC2インスタンスにsshログインして、"node"という名前のプロセスを全てkillする
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "pkill ^node$ &"
+  # productionブランチのソースコードをビルドしてEC2インスタンスにアップロードし、Node.jsのアプリケーションを起動するjob。
+  deploy_and_start_process:
+    # productionブランチにpushされた時または手動実行メニューで「デプロイ」が選択された時に実行する。
+    if: github.event_name == 'push' || github.event.inputs.runType == 'デプロイ'
+    # kill_processが完了した後に実行するという指定。
+    needs: kill_process
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update OpenSSL
+        run: sudo apt-get update && sudo apt-get install -y openssl
+
+      - name: Checkout code to production branch
+        uses: actions/checkout@v4
+        with:
+          ref: production
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+
+      - name: Install Dependencies and Build
+        env:
+          NODE_ENV: production
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to EC2
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          SAMPLE_ENV_A: ${{ secrets.SAMPLE_ENV_A }}
+          SAMPLE_ENV_B: ${{ secrets.SAMPLE_ENV_B }}
+          SAMPLE_ENV_C: ${{ secrets.SAMPLE_ENV_C }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          : # EC2インスタンスの/home/ec2-user/sample-appディレクトリにアプリケーションがあるので、まずは削除してからアップロードする。ログファイル用のディレクトリもなければ作成する。
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "rm -r -f /sample-app && mkdir /home/ec2-user/sample-app &"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "mkdir -p /home/ec2-user/sample-app-log &"
+          : # リポジトリ内の全てのファイルを一括で送信するのではなく、サブディレクトリ・ファイル単位で送信する。ここは適宜読み替えること。
+          echo "put -r ./dist ./sample-app/dist" | sftp -i private_key.pem $USER@$HOST
+          echo "put ./package.json ./sample-app/package.json" | sftp -i private_key.pem $USER@$HOST
+          echo "put ./package-lock.json ./sample-app/package-lock.json" | sftp -i private_key.pem $USER@$HOST
+          : # EC2インスタンスで対象のNode.jsバージョンをインストールし、アプリケーションの依存関係をインストールする。
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "volta install node@18.17.1 && npm ci --production --prefix /home/ec2-user/sample-app"
+          : # Node.jsプロセスを起動するコマンドを実行。
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "NODE_ENV=production SAMPLE_ENV_A=$SAMPLE_ENV_A SAMPLE_ENV_B=$SAMPLE_ENV_B SAMPLE_ENV_C=$SAMPLE_ENV_C nohup npm run start --prefix /home/ec2-user/sample-app > /home/ec2-user/sample-app-log/nohup-$(date +%Y%m%d%H%M).log 2>&1 &"
+  # EC2インスタンスにあるアプリケーションを起動するjob。
+  just_start_process:
+    # productionブランチにpushされた時または手動実行メニューで「アプリケーション 再起動」が選択された時のみ実行する。
+    if: github.event.inputs.runType == 'アプリケーション 再起動'
+    # kill_processが完了した後に実行するという指定。
+    needs: kill_process
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update OpenSSL
+        run: sudo apt-get update && sudo apt-get install -y openssl
+
+      - name: Restart Application
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          SAMPLE_ENV_A: ${{ secrets.SAMPLE_ENV_A }}
+          SAMPLE_ENV_B: ${{ secrets.SAMPLE_ENV_B }}
+          SAMPLE_ENV_C: ${{ secrets.SAMPLE_ENV_C }}
+        # EC2インスタンスにsshログインして、アプリケーションを起動するコマンドを実行する。
+        # コマンドの前で、このコマンドにしか反映されない環境変数を定義している。"変数名=値"の形式で羅列する。process.envで使われる値をここで環境変数としてセットする。
+        # このssh接続が切れてもプロセスを継続して欲しいので、バックグラウンドで実行してもらうためコマンド末尾に"&"をつけ、nohubコマンドを使い実行する。
+        # 出力ログを"/home/ec2-user/sample-app-log/nohup-YYYYmmdd.log"というファイルに保存するように設定している。
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "NODE_ENV=production SAMPLE_ENV_A=$SAMPLE_ENV_A SAMPLE_ENV_B=$SAMPLE_ENV_B SAMPLE_ENV_C=$SAMPLE_ENV_C nohup npm run start --prefix /home/ec2-user/sample-app > /home/ec2-user/sample-app-log/nohup-$(date +%Y%m%d%H%M).log 2>&1 &"
+
